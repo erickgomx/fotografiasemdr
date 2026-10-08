@@ -44,9 +44,9 @@ export async function POST(request: Request) {
         ? Number(Number(customAmount).toFixed(2))
         : gift.price;
 
-    if (finalAmount < 5) {
+    if (finalAmount < 100) {
       return NextResponse.json(
-        { success: false, error: "O valor mínimo para contribuição é de R$ 5,00." },
+        { success: false, error: "O valor mínimo para contribuição é de R$ 100,00." },
         { status: 400 }
       );
     }

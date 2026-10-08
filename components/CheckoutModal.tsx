@@ -40,7 +40,7 @@ export function CheckoutModal({ gift, onClose, onSuccess, onGoToMessages }: Chec
 
   useEffect(() => {
     if (gift) {
-      setAmount(gift.price);
+      setAmount(Math.max(100, gift.price));
       setIsEditingAmount(gift.category === "aberto");
     }
   }, [gift]);
@@ -130,8 +130,8 @@ export function CheckoutModal({ gift, onClose, onSuccess, onGoToMessages }: Chec
       return;
     }
 
-    if (!amount || Number(amount) < 10) {
-      setErrorMessage("O valor mínimo para contribuição é de R$ 10,00.");
+    if (!amount || Number(amount) < 100) {
+      setErrorMessage("O valor mínimo para contribuição é de R$ 100,00.");
       return;
     }
 
@@ -335,12 +335,12 @@ export function CheckoutModal({ gift, onClose, onSuccess, onGoToMessages }: Chec
                   </span>
                   <input
                     type="number"
-                    min={10}
+                    min={100}
                     step={10}
                     required
                     value={amount}
                     onChange={(e) => setAmount(Number(e.target.value))}
-                    placeholder="Digite o valor desejado (sem limite máximo)"
+                    placeholder="Digite o valor desejado (a partir de R$ 100)"
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-amber-300 bg-white font-extrabold text-stone-900 text-lg focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                   />
                 </div>
@@ -348,7 +348,7 @@ export function CheckoutModal({ gift, onClose, onSuccess, onGoToMessages }: Chec
                 {/* Botões Rápidos de Valor */}
                 <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
                   <span className="text-[10px] text-stone-400 font-medium">Sugestões:</span>
-                  {[50, 100, 200, 500, 1000, 2500].map((preset) => (
+                  {[100, 200, 350, 500, 1000, 2500].map((preset) => (
                     <button
                       key={preset}
                       type="button"
