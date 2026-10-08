@@ -1,0 +1,48 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Gift {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  imageUrl    String
+  price       Float
+  category    String   // "lua-de-mel", "festa", "sobrevivencia"
+  active      Boolean  @default(true)
+  orders      Order[]
+  createdAt   DateTime @default(now())
+}
+
+model Order {
+  id             String    @id @default(uuid())
+  giftId         String
+  gift           Gift      @relation(fields: [giftId], references: [id])
+  amount         Float
+  payerName      String
+  payerEmail     String
+  payerCpf       String
+  payerMessage   String?
+  isAnonymous    Boolean   @default(false)
+  paymentMethod  String    // "PIX" | "CREDIT_CARD"
+  mpPaymentId    String?   @unique
+  status         String    @default("PENDING") // "PENDING", "APPROVED", "REJECTED"
+  installments   Int       @default(1)
+  guestMessage   GuestMessage?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model GuestMessage {
+  id        String   @id @default(uuid())
+  orderId   String   @unique
+  order     Order    @relation(fields: [orderId], references: [id])
+  name      String
+  message   String
+  createdAt DateTime @default(now())
+}
