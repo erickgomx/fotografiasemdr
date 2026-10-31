@@ -1,8 +1,16 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { INITIAL_GIFTS } from "@/lib/seedData";
+import { isAuthenticated } from "@/lib/auth";
 
 export async function POST() {
+  if (!isAuthenticated()) {
+    return NextResponse.json(
+      { success: false, error: "Acesso não autorizado." },
+      { status: 401 }
+    );
+  }
+
   try {
     for (const item of INITIAL_GIFTS) {
       const exists = await prisma.gift.findFirst({

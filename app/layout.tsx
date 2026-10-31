@@ -19,6 +19,10 @@ export const metadata: Metadata = {
   description:
     "Apoie o casamento de Erick & Itally com cotas audiovisuais, sobrevivência à ilha de edição, festa, open bar e lua de mel!",
   keywords: ["casamento", "lista de presentes", "cotas de casamento", "audiovisual", "filmmaker", "pix", "mercado pago"],
+  icons: {
+    icon: "/icon.svg",
+    apple: "/icon.svg",
+  },
 };
 
 export default function RootLayout({
@@ -28,7 +32,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" className={`${inter.variable} ${playfair.variable} scroll-smooth`}>
-      <body className="min-h-screen bg-[#FAF8F5] text-stone-800 antialiased selection:bg-rose-100 selection:text-rose-900">
+      <body className="min-h-screen bg-[#FAF9F6] text-stone-800 antialiased selection:bg-stone-200 selection:text-stone-900">
         {children}
       </body>
     </html>

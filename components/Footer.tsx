@@ -1,18 +1,15 @@
-import { Heart } from "lucide-react";
-
 export function Footer() {
   return (
-    <footer className="mt-20 border-t border-rose-100 bg-white/60 py-10 text-center text-xs text-stone-500">
+    <footer className="mt-24 border-t border-stone-200/60 bg-white/40 py-12 text-center text-xs text-stone-400">
       <div className="max-w-4xl mx-auto px-4 space-y-3">
-        <div className="flex items-center justify-center gap-2">
-          <span className="font-serif text-lg font-bold text-stone-900">Erick &amp; Itally</span>
-          <Heart className="w-4 h-4 fill-rose-500 text-rose-500" />
-        </div>
-        <p className="text-stone-500">
-          Obrigado por celebrar esse momento tão especial com a gente e por ajudar a manter nossa sanidade mental!
+        <span className="font-serif text-base font-bold text-stone-800 tracking-tight block">
+          Erick &amp; Itally
+        </span>
+        <p className="text-stone-500 font-light max-w-md mx-auto">
+          Obrigado por celebrar esse momento especial com a gente e por fazer parte da nossa história.
         </p>
-        <div className="pt-2 text-[11px] text-stone-400">
-          Aplicação Full-Stack de Presentes de Casamento • Mercado Pago &amp; Mock Mode Integrado
+        <div className="pt-2 text-[10px] uppercase tracking-widest text-stone-400">
+          Novembro 2026 • Fotografia &amp; Filmmaking
         </div>
       </div>
     </footer>

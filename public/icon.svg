@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1c1917" />
+      <stop offset="100%" stop-color="#0c0a09" />
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F5E6C8" />
+      <stop offset="50%" stop-color="#D4AF37" />
+      <stop offset="100%" stop-color="#AA7C11" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background container -->
+  <rect width="128" height="128" rx="28" fill="url(#bgGrad)" />
+  <rect x="2" y="2" width="124" height="124" rx="26" fill="none" stroke="url(#goldGrad)" stroke-width="1.5" stroke-opacity="0.3" />
+
+  <!-- Monogram E & I with subtle photography framing -->
+  <g fill="url(#goldGrad)">
+    <!-- Letter E -->
+    <path d="M 32 38 L 32 90 L 58 90 L 58 83 L 40 83 L 40 67 L 54 67 L 54 60 L 40 60 L 40 45 L 58 45 L 58 38 Z" />
+
+    <!-- Ampersand / Heart symbol connecting -->
+    <path d="M 64 62 C 61 58 58 60 58 64 C 58 68 64 74 64 74 C 64 74 70 68 70 64 C 70 60 67 58 64 62 Z" opacity="0.9" />
+
+    <!-- Letter I -->
+    <path d="M 76 38 L 94 38 L 94 45 L 88 45 L 88 83 L 94 83 L 94 90 L 76 90 L 76 83 L 82 83 L 82 45 L 76 45 Z" />
+  </g>
+
+  <!-- Subtle camera aperture dots / marks -->
+  <circle cx="64" cy="28" r="2.5" fill="#D4AF37" opacity="0.8" />
+  <circle cx="64" cy="100" r="2.5" fill="#D4AF37" opacity="0.8" />
+</svg>

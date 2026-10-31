@@ -1,10 +1,18 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { isMockMode } from "@/lib/mercadopago";
+import { isAuthenticated } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  if (!isAuthenticated()) {
+    return NextResponse.json(
+      { success: false, error: "Acesso não autorizado. Faça login primeiro." },
+      { status: 401 }
+    );
+  }
+
   try {
     const orders = await prisma.order.findMany({
       orderBy: { createdAt: "desc" },
