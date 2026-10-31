@@ -10,7 +10,6 @@ import {
   TrendingUp,
   RefreshCw,
   Search,
-  ShieldAlert,
   Database,
   Check,
   Lock,
@@ -18,7 +17,8 @@ import {
   EyeOff,
   LogOut,
   Loader2,
-  Sparkles,
+  Trash2,
+  ShieldCheck,
 } from "lucide-react";
 
 interface AdminData {
@@ -42,6 +42,7 @@ interface AdminData {
     isAnonymous: boolean;
     paymentMethod: string;
     status: string;
+    mpPaymentId: string | null;
     createdAt: string;
     gift: {
       title: string;
@@ -62,12 +63,14 @@ export function AdminDashboard() {
 
   const [data, setData] = useState<AdminData | null>(null);
   const [loading, setLoading] = useState(false);
+  const [syncingAll, setSyncingAll] = useState(false);
   const [filterStatus, setFilterStatus] = useState("TODOS");
   const [searchTerm, setSearchTerm] = useState("");
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+  const [statusFeedback, setStatusFeedback] = useState<{ id: string; msg: string; type: "ok" | "warn" } | null>(null);
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
 
-  // Verifica se o usuário já tem cookie de autenticação válido
+  // Verifica autenticação
   const checkAuth = async () => {
     try {
       const res = await fetch("/api/admin/auth");
@@ -146,20 +149,60 @@ export function AdminDashboard() {
     }
   };
 
-  const handleApproveOrder = async (orderId: string) => {
+  // Sincroniza todos os pedidos com a API real do Mercado Pago
+  const handleSyncAllWithMercadoPago = async () => {
+    setSyncingAll(true);
+    setStatusFeedback(null);
+    try {
+      const res = await fetch("/api/admin/sync", { method: "POST" });
+      const json = await res.json();
+      if (json.success) {
+        setSyncMessage(json.message);
+        setTimeout(() => setSyncMessage(null), 6000);
+        await fetchMetrics();
+      }
+    } catch (e) {
+      console.error("Erro ao sincronizar com MP:", e);
+    } finally {
+      setSyncingAll(false);
+    }
+  };
+
+  // Checa status real do pedido individual no Mercado Pago
+  const handleCheckOrderOnMP = async (orderId: string) => {
+    setActionLoadingId(orderId);
+    setStatusFeedback(null);
+    try {
+      const res = await fetch(`/api/admin/orders/${orderId}`);
+      const json = await res.json();
+      if (json.success) {
+        setStatusFeedback({
+          id: orderId,
+          msg: json.message,
+          type: json.realStatus === "APPROVED" ? "ok" : "warn",
+        });
+        await fetchMetrics();
+      }
+    } catch (e) {
+      console.error("Erro ao consultar Mercado Pago:", e);
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  // Exclui pedido de teste
+  const handleDeleteOrder = async (orderId: string) => {
+    if (!confirm("Deseja realmente excluir este pedido de teste?")) return;
+
     setActionLoadingId(orderId);
     try {
-      const res = await fetch(`/api/orders/${orderId}/simulate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "approve" }),
-      });
+      const res = await fetch(`/api/admin/orders/${orderId}`, { method: "DELETE" });
       const json = await res.json();
       if (json.success) {
         await fetchMetrics();
       }
     } catch (e) {
-      console.error("Erro ao aprovar pedido:", e);
+      console.error("Erro ao excluir pedido:", e);
     } finally {
       setActionLoadingId(null);
     }
@@ -196,12 +239,12 @@ export function AdminDashboard() {
     );
   }
 
-  // TELA DE LOGIN MINIMALISTA & SOFISTICADA
+  // TELA DE LOGIN MINIMALISTA
   if (!isAuthenticated) {
     return (
       <section className="py-16 sm:py-24 max-w-md mx-auto px-4">
-        <div className="bg-white rounded-3xl p-8 sm:p-10 border border-stone-200/80 shadow-sm text-center">
-          <div className="w-12 h-12 rounded-2xl bg-stone-100 border border-stone-200 text-stone-800 flex items-center justify-center mx-auto mb-5 shadow-xs">
+        <div className="bg-white rounded-3xl p-8 sm:p-10 border border-stone-200/80 shadow-xs text-center">
+          <div className="w-12 h-12 rounded-2xl bg-stone-100 border border-stone-200 text-stone-800 flex items-center justify-center mx-auto mb-5">
             <Lock className="w-5 h-5 text-stone-800" />
           </div>
 
@@ -212,7 +255,7 @@ export function AdminDashboard() {
             Acesso dos Noivos
           </h2>
           <p className="mt-2 text-xs text-stone-500 leading-relaxed max-w-xs mx-auto">
-            Digite a senha de administrador para acompanhar presentes, valores e mensagens recebidas.
+            Digite a senha para acompanhar os valores e mensagens dos convidados.
           </p>
 
           <form onSubmit={handleLogin} className="mt-7 space-y-4 text-left">
@@ -248,7 +291,7 @@ export function AdminDashboard() {
             <button
               type="submit"
               disabled={loginLoading}
-              className="w-full py-3 rounded-xl bg-stone-900 hover:bg-stone-800 text-white font-medium text-xs sm:text-sm shadow-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full py-3 rounded-xl bg-stone-900 hover:bg-stone-800 text-white font-medium text-xs sm:text-sm shadow-xs transition-all flex items-center justify-center gap-2 disabled:opacity-50"
             >
               {loginLoading ? (
                 <>
@@ -263,10 +306,7 @@ export function AdminDashboard() {
 
           <div className="mt-6 pt-5 border-t border-stone-100 text-center">
             <span className="text-[11px] text-stone-400 block">
-              Senha padrão do ambiente: <code className="bg-stone-100 px-1.5 py-0.5 rounded text-stone-700 font-mono text-[10px]">casamento2026</code>
-            </span>
-            <span className="text-[10px] text-stone-400 block mt-1">
-              (Você pode alterar no arquivo <code className="font-mono text-[10px]">.env.local</code> com a variável <code className="font-mono text-[10px]">ADMIN_PASSWORD</code>)
+              Senha padrão: <code className="bg-stone-100 px-1.5 py-0.5 rounded text-stone-700 font-mono text-[10px]">casamento2026</code>
             </span>
           </div>
         </div>
@@ -274,7 +314,7 @@ export function AdminDashboard() {
     );
   }
 
-  // PAINEL DE CONTROLE APÓS LOGIN (EDITORIAL & ESPAÇOSO)
+  // PAINEL DE CONTROLE APÓS LOGIN
   const filteredOrders =
     data?.orders.filter((order) => {
       const matchesStatus =
@@ -289,42 +329,53 @@ export function AdminDashboard() {
   return (
     <section className="py-8 sm:py-14 max-w-6xl mx-auto px-4 sm:px-6">
       {/* Cabeçalho do Painel */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10 pb-6 border-b border-stone-200/80">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pb-6 border-b border-stone-200/80">
         <div>
           <span className="text-[11px] uppercase tracking-widest font-semibold text-stone-400 block mb-1">
-            Gestão Financeira
+            Gestão Financeira Oficial
           </span>
           <h2 className="font-serif text-2xl sm:text-3xl font-bold text-stone-900">
             Painel dos Noivos
           </h2>
           <p className="text-xs sm:text-sm text-stone-500 mt-1">
-            Acompanhe em tempo real as cotas recebidas e as mensagens dos convidados.
+            Os valores abaixo refletem estritamente as transações confirmadas pelo Mercado Pago.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Botão de Sincronização com o Mercado Pago */}
+          <button
+            onClick={handleSyncAllWithMercadoPago}
+            disabled={syncingAll}
+            className="px-3.5 py-2 rounded-xl bg-stone-900 text-white text-xs font-medium hover:bg-stone-800 transition-colors flex items-center gap-1.5 shadow-xs disabled:opacity-50"
+            title="Consulta a API do Mercado Pago para todos os pedidos e atualiza o total real"
+          >
+            <ShieldCheck className={`w-3.5 h-3.5 ${syncingAll ? "animate-spin" : ""}`} />
+            <span>{syncingAll ? "Sincronizando..." : "Sincronizar com Mercado Pago"}</span>
+          </button>
+
           <button
             onClick={fetchMetrics}
             disabled={loading}
-            className="px-3.5 py-2 rounded-xl bg-white border border-stone-200 text-xs font-medium text-stone-700 hover:bg-stone-50 transition-colors flex items-center gap-1.5 shadow-xs"
-            title="Atualizar dados"
+            className="px-3 py-2 rounded-xl bg-white border border-stone-200 text-xs font-medium text-stone-700 hover:bg-stone-50 transition-colors flex items-center gap-1.5 shadow-xs"
+            title="Recarregar tela"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin text-stone-800" : ""}`} />
-            <span>Atualizar</span>
+            <span className="hidden sm:inline">Atualizar</span>
           </button>
 
           <button
             onClick={handleSyncGifts}
-            className="px-3.5 py-2 rounded-xl bg-white border border-stone-200 text-xs font-medium text-stone-700 hover:bg-stone-50 transition-colors flex items-center gap-1.5 shadow-xs"
-            title="Recarregar catálogo padrão"
+            className="px-3 py-2 rounded-xl bg-white border border-stone-200 text-xs font-medium text-stone-700 hover:bg-stone-50 transition-colors flex items-center gap-1.5 shadow-xs"
+            title="Recarregar catálogo padrão de presentes"
           >
             <Database className="w-3.5 h-3.5 text-stone-500" />
-            <span className="hidden sm:inline">Restaurar Catálogo</span>
+            <span className="hidden sm:inline">Catálogo</span>
           </button>
 
           <button
             onClick={handleLogout}
-            className="px-3.5 py-2 rounded-xl bg-stone-900 text-white text-xs font-medium hover:bg-stone-800 transition-colors flex items-center gap-1.5 shadow-xs"
+            className="px-3 py-2 rounded-xl bg-stone-100 text-stone-700 text-xs font-medium hover:bg-stone-200 transition-colors flex items-center gap-1.5 shadow-xs"
           >
             <LogOut className="w-3.5 h-3.5" />
             <span>Sair</span>
@@ -333,28 +384,28 @@ export function AdminDashboard() {
       </div>
 
       {syncMessage && (
-        <div className="mb-6 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2 animate-fade-in">
-          <Check className="w-4 h-4 text-emerald-600" />
+        <div className="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs flex items-center gap-2 animate-fade-in font-medium">
+          <Check className="w-4 h-4 text-emerald-600 shrink-0" />
           <span>{syncMessage}</span>
         </div>
       )}
 
-      {/* Métricas Principais */}
+      {/* Métricas Oficiais */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {/* Total Arrecadado */}
+        {/* Total Arrecadado Real */}
         <div className="bg-white rounded-2xl p-5 border border-stone-200/80 shadow-xs flex items-center justify-between">
           <div>
             <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider block">
-              Total Arrecadado
+              Total Confirmado
             </span>
-            <span className="text-2xl font-bold text-stone-900 mt-1 block">
+            <span className="text-2xl font-bold text-emerald-600 mt-1 block">
               {formatBRL(data?.metrics.totalRaised || 0)}
             </span>
             <span className="text-[11px] text-stone-400 mt-0.5 block">
-              {data?.metrics.approvedCount || 0} contribuições
+              {data?.metrics.approvedCount || 0} pagamentos recebidos
             </span>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-stone-100 text-stone-800 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
             <DollarSign className="w-5 h-5" />
           </div>
         </div>
@@ -363,16 +414,16 @@ export function AdminDashboard() {
         <div className="bg-white rounded-2xl p-5 border border-stone-200/80 shadow-xs flex items-center justify-between">
           <div>
             <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider block">
-              Aprovados
+              Aprovados no MP
             </span>
             <span className="text-2xl font-bold text-stone-900 mt-1 block">
               {data?.metrics.approvedCount || 0}
             </span>
             <span className="text-[11px] text-emerald-600 font-medium mt-0.5 block">
-              Confirmados
+              Dinheiro na conta
             </span>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-stone-100 text-stone-800 flex items-center justify-center">
             <CheckCircle2 className="w-5 h-5" />
           </div>
         </div>
@@ -381,13 +432,13 @@ export function AdminDashboard() {
         <div className="bg-white rounded-2xl p-5 border border-stone-200/80 shadow-xs flex items-center justify-between">
           <div>
             <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider block">
-              Pendentes
+              Pendentes / Não Pagos
             </span>
-            <span className="text-2xl font-bold text-stone-900 mt-1 block">
+            <span className="text-2xl font-bold text-amber-600 mt-1 block">
               {data?.metrics.pendingCount || 0}
             </span>
             <span className="text-[11px] text-stone-400 mt-0.5 block">
-              Aguardando confirmação
+              Aguardando Pix ou cartão
             </span>
           </div>
           <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center">
@@ -405,7 +456,7 @@ export function AdminDashboard() {
               {formatBRL(data?.metrics.averageContribution || 0)}
             </span>
             <span className="text-[11px] text-stone-400 mt-0.5 block">
-              Média por presente
+              Média por presente real
             </span>
           </div>
           <div className="w-10 h-10 rounded-xl bg-stone-100 text-stone-800 flex items-center justify-center">
@@ -413,18 +464,6 @@ export function AdminDashboard() {
           </div>
         </div>
       </div>
-
-      {/* Indicador discreto de modo Mock */}
-      {data?.isMockMode && (
-        <div className="mb-8 p-4 rounded-2xl bg-stone-100/80 border border-stone-200 text-stone-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-2.5">
-            <span className="inline-block w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-            <span>
-              <strong>Ambiente de Testes (Modo Mock):</strong> Você pode aprovar pedidos pendentes manualmente abaixo para simular a confirmação de recebimento.
-            </span>
-          </div>
-        </div>
-      )}
 
       {/* Tabela de Pedidos */}
       <div className="bg-white rounded-2xl border border-stone-200/80 shadow-xs overflow-hidden">
@@ -457,7 +496,7 @@ export function AdminDashboard() {
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Buscar pedido..."
+              placeholder="Buscar por nome ou presente..."
               className="w-full pl-9 pr-3 py-1.5 rounded-lg border border-stone-200 text-xs focus:outline-none focus:border-stone-900"
             />
           </div>
@@ -477,7 +516,7 @@ export function AdminDashboard() {
                   <th className="py-3 px-4">Presente</th>
                   <th className="py-3 px-4">Valor</th>
                   <th className="py-3 px-4">Método</th>
-                  <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4">Status no MP</th>
                   <th className="py-3 px-4">Recado</th>
                   <th className="py-3 px-4 text-right">Ação</th>
                 </tr>
@@ -490,6 +529,9 @@ export function AdminDashboard() {
                     hour: "2-digit",
                     minute: "2-digit",
                   });
+
+                  const isChecking = actionLoadingId === order.id;
+                  const feedback = statusFeedback?.id === order.id ? statusFeedback : null;
 
                   return (
                     <tr key={order.id} className="hover:bg-stone-50/50 transition-colors">
@@ -526,7 +568,7 @@ export function AdminDashboard() {
                         {order.status === "APPROVED" && (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-medium text-[10px]">
                             <CheckCircle2 className="w-3 h-3" />
-                            Aprovado
+                            Confirmado
                           </span>
                         )}
                         {order.status === "PENDING" && (
@@ -541,6 +583,12 @@ export function AdminDashboard() {
                             Recusado
                           </span>
                         )}
+
+                        {feedback && (
+                          <div className={`text-[10px] mt-1 font-medium ${feedback.type === "ok" ? "text-emerald-700" : "text-amber-700"}`}>
+                            {feedback.msg}
+                          </div>
+                        )}
                       </td>
 
                       <td className="py-3 px-4 max-w-xs truncate text-stone-600 italic">
@@ -548,15 +596,28 @@ export function AdminDashboard() {
                       </td>
 
                       <td className="py-3 px-4 text-right">
-                        {order.status === "PENDING" && (
+                        <div className="flex items-center justify-end gap-1.5">
+                          {/* Botão de Checagem no Mercado Pago */}
                           <button
-                            onClick={() => handleApproveOrder(order.id)}
-                            disabled={actionLoadingId === order.id}
-                            className="px-2.5 py-1 rounded bg-stone-900 hover:bg-stone-800 text-white font-medium text-[10px] transition-all"
+                            onClick={() => handleCheckOrderOnMP(order.id)}
+                            disabled={isChecking}
+                            className="px-2.5 py-1 rounded bg-stone-100 hover:bg-stone-200 text-stone-700 font-medium text-[10px] transition-all flex items-center gap-1"
+                            title="Verifica se o pagamento já caiu na conta do Mercado Pago"
                           >
-                            {actionLoadingId === order.id ? "Aprovando..." : "Aprovar"}
+                            <RefreshCw className={`w-3 h-3 ${isChecking ? "animate-spin" : ""}`} />
+                            <span>Checar</span>
                           </button>
-                        )}
+
+                          {/* Botão para deletar pedido de teste */}
+                          <button
+                            onClick={() => handleDeleteOrder(order.id)}
+                            disabled={isChecking}
+                            className="p-1 rounded text-stone-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                            title="Excluir este pedido de teste"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
