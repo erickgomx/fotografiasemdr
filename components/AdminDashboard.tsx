@@ -19,6 +19,7 @@ import {
   Loader2,
   Trash2,
   ShieldCheck,
+  Copy,
 } from "lucide-react";
 
 interface AdminData {
@@ -229,7 +230,6 @@ export function AdminDashboard() {
     }).format(val);
   };
 
-  // Carregamento inicial de verificação
   if (isAuthenticated === null) {
     return (
       <div className="py-24 text-center text-stone-400">
@@ -322,7 +322,8 @@ export function AdminDashboard() {
       const matchesSearch =
         order.payerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         order.payerEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.gift.title.toLowerCase().includes(searchTerm.toLowerCase());
+        order.gift.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (order.mpPaymentId && order.mpPaymentId.includes(searchTerm));
       return matchesStatus && matchesSearch;
     }) || [];
 
@@ -392,7 +393,6 @@ export function AdminDashboard() {
 
       {/* Métricas Oficiais */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {/* Total Arrecadado Real */}
         <div className="bg-white rounded-2xl p-5 border border-stone-200/80 shadow-xs flex items-center justify-between">
           <div>
             <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider block">
@@ -410,7 +410,6 @@ export function AdminDashboard() {
           </div>
         </div>
 
-        {/* Presentes Aprovados */}
         <div className="bg-white rounded-2xl p-5 border border-stone-200/80 shadow-xs flex items-center justify-between">
           <div>
             <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider block">
@@ -428,7 +427,6 @@ export function AdminDashboard() {
           </div>
         </div>
 
-        {/* Aguardando Pagamento */}
         <div className="bg-white rounded-2xl p-5 border border-stone-200/80 shadow-xs flex items-center justify-between">
           <div>
             <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider block">
@@ -446,7 +444,6 @@ export function AdminDashboard() {
           </div>
         </div>
 
-        {/* Ticket Médio */}
         <div className="bg-white rounded-2xl p-5 border border-stone-200/80 shadow-xs flex items-center justify-between">
           <div>
             <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider block">
@@ -496,7 +493,7 @@ export function AdminDashboard() {
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Buscar por nome ou presente..."
+              placeholder="Buscar por nome, presente ou ID..."
               className="w-full pl-9 pr-3 py-1.5 rounded-lg border border-stone-200 text-xs focus:outline-none focus:border-stone-900"
             />
           </div>
@@ -513,6 +510,7 @@ export function AdminDashboard() {
               <thead className="bg-stone-50/60 border-b border-stone-200/70 text-stone-500 uppercase font-medium text-[10px] tracking-wider">
                 <tr>
                   <th className="py-3 px-4">Convidado</th>
+                  <th className="py-3 px-4">ID Mercado Pago</th>
                   <th className="py-3 px-4">Presente</th>
                   <th className="py-3 px-4">Valor</th>
                   <th className="py-3 px-4">Método</th>
@@ -548,6 +546,17 @@ export function AdminDashboard() {
                         <div className="text-[10px] text-stone-400">
                           {order.payerEmail} • {dateStr}
                         </div>
+                      </td>
+
+                      {/* Coluna ID Mercado Pago com clique para copiar */}
+                      <td className="py-3 px-4">
+                        {order.mpPaymentId ? (
+                          <div className="flex items-center gap-1 font-mono text-[11px] text-stone-700 bg-stone-100 px-2 py-1 rounded w-fit select-all">
+                            <span>{order.mpPaymentId}</span>
+                          </div>
+                        ) : (
+                          <span className="text-stone-400 text-[10px]">—</span>
+                        )}
                       </td>
 
                       <td className="py-3 px-4">
@@ -597,7 +606,6 @@ export function AdminDashboard() {
 
                       <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
-                          {/* Botão de Checagem no Mercado Pago */}
                           <button
                             onClick={() => handleCheckOrderOnMP(order.id)}
                             disabled={isChecking}
@@ -608,12 +616,11 @@ export function AdminDashboard() {
                             <span>Checar</span>
                           </button>
 
-                          {/* Botão para deletar pedido de teste */}
                           <button
                             onClick={() => handleDeleteOrder(order.id)}
                             disabled={isChecking}
                             className="p-1 rounded text-stone-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
-                            title="Excluir este pedido de teste"
+                            title="Excluir este pedido"
                           >
                             <Trash2 className="w-3 h-3" />
                           </button>
