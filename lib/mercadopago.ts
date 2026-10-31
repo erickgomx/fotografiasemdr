@@ -50,6 +50,35 @@ export interface PaymentResult {
 }
 
 /**
+ * Retorna uma URL de notificação webhook válida com HTTPS público para o Mercado Pago,
+ * ou undefined se estiver em localhost para não causar erro de validação na API.
+ */
+function getValidNotificationUrl(): string | undefined {
+  let url = process.env.NEXT_PUBLIC_BASE_URL?.trim();
+
+  if (!url || url.includes("localhost") || url.includes("127.0.0.1")) {
+    if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+      url = `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+    } else if (process.env.VERCEL_URL) {
+      url = `https://${process.env.VERCEL_URL}`;
+    } else {
+      url = "https://fotografiasemdr.vercel.app";
+    }
+  }
+
+  if (!url.startsWith("http://") && !url.startsWith("https://")) {
+    url = `https://${url}`;
+  }
+
+  // O Mercado Pago exige estritamente HTTPS público válido
+  if (url.startsWith("https://") && !url.includes("localhost") && !url.includes("127.0.0.1")) {
+    return `${url.replace(/\/$/, "")}/api/webhooks/mercadopago`;
+  }
+
+  return undefined;
+}
+
+/**
  * Criação unificada de pagamento com adaptação inteligente (Mock / Oficial)
  */
 export async function createPayment(input: CreatePaymentInput): Promise<PaymentResult> {
@@ -86,7 +115,7 @@ export async function createPayment(input: CreatePaymentInput): Promise<PaymentR
         pixData: {
           qrCode: mockPixCopiaECola,
           qrCodeBase64: rawBase64,
-          ticketUrl: `http://localhost:3000/pedido/${input.orderId}`,
+          ticketUrl: `https://fotografiasemdr.vercel.app`,
         },
       };
     } else {
@@ -94,7 +123,7 @@ export async function createPayment(input: CreatePaymentInput): Promise<PaymentR
       return {
         isMock: true,
         mpPaymentId: mockId,
-        status: "APPROVED", // Cartão em simulação aprova direto ou após teste
+        status: "APPROVED",
         paymentMethod: "CREDIT_CARD",
       };
     }
@@ -111,26 +140,31 @@ export async function createPayment(input: CreatePaymentInput): Promise<PaymentR
   const [firstName, ...lastNameParts] = input.payerName.trim().split(" ");
   const lastName = lastNameParts.join(" ") || firstName;
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+  const notificationUrl = getValidNotificationUrl();
 
   if (input.paymentMethod === "PIX") {
-    const paymentResponse = await paymentService.create({
-      body: {
-        transaction_amount: Number(input.amount.toFixed(2)),
-        description: input.description,
-        payment_method_id: "pix",
-        payer: {
-          email: input.payerEmail,
-          first_name: firstName,
-          last_name: lastName,
-          identification: {
-            type: "CPF",
-            number: cleanCpf,
-          },
+    const paymentBody: any = {
+      transaction_amount: Number(input.amount.toFixed(2)),
+      description: input.description,
+      payment_method_id: "pix",
+      payer: {
+        email: input.payerEmail,
+        first_name: firstName,
+        last_name: lastName,
+        identification: {
+          type: "CPF",
+          number: cleanCpf,
         },
-        external_reference: input.orderId,
-        notification_url: `${baseUrl}/api/webhooks/mercadopago`,
       },
+      external_reference: input.orderId,
+    };
+
+    if (notificationUrl) {
+      paymentBody.notification_url = notificationUrl;
+    }
+
+    const paymentResponse = await paymentService.create({
+      body: paymentBody,
     });
 
     const txData = paymentResponse.point_of_interaction?.transaction_data;
@@ -151,25 +185,30 @@ export async function createPayment(input: CreatePaymentInput): Promise<PaymentR
     };
   } else {
     // Cartão de Crédito Real
-    const paymentResponse = await paymentService.create({
-      body: {
-        transaction_amount: Number(input.amount.toFixed(2)),
-        token: input.cardToken,
-        description: input.description,
-        installments: input.installments || 1,
-        payment_method_id: "credit_card",
-        payer: {
-          email: input.payerEmail,
-          first_name: firstName,
-          last_name: lastName,
-          identification: {
-            type: "CPF",
-            number: cleanCpf,
-          },
+    const paymentBody: any = {
+      transaction_amount: Number(input.amount.toFixed(2)),
+      token: input.cardToken,
+      description: input.description,
+      installments: input.installments || 1,
+      payment_method_id: "credit_card",
+      payer: {
+        email: input.payerEmail,
+        first_name: firstName,
+        last_name: lastName,
+        identification: {
+          type: "CPF",
+          number: cleanCpf,
         },
-        external_reference: input.orderId,
-        notification_url: `${baseUrl}/api/webhooks/mercadopago`,
       },
+      external_reference: input.orderId,
+    };
+
+    if (notificationUrl) {
+      paymentBody.notification_url = notificationUrl;
+    }
+
+    const paymentResponse = await paymentService.create({
+      body: paymentBody,
     });
 
     return {
@@ -206,7 +245,7 @@ function mapMPStatus(status?: string): "PENDING" | "APPROVED" | "REJECTED" {
     case "approved":
       return "APPROVED";
     case "rejected":
-    case "cancelled":
+      case "cancelled":
       return "REJECTED";
     default:
       return "PENDING";
