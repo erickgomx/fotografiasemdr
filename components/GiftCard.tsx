@@ -88,7 +88,7 @@ export function GiftCard({ gift, onSelect }: GiftCardProps) {
               {gift.category === "aberto" ? "Contribuição" : "Valor"}
             </span>
             <span className="text-lg sm:text-xl font-bold text-stone-900 tracking-tight">
-              {gift.category === "aberto" ? "A partir de R$ 100" : formattedPrice}
+              {gift.category === "aberto" ? "A partir de R$ 1" : formattedPrice}
             </span>
           </div>
 

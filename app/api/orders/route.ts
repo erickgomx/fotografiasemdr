@@ -44,9 +44,9 @@ export async function POST(request: Request) {
         ? Number(Number(customAmount).toFixed(2))
         : gift.price;
 
-    if (finalAmount < 100) {
+    if (finalAmount < 1) {
       return NextResponse.json(
-        { success: false, error: "O valor mínimo para contribuição é de R$ 100,00." },
+        { success: false, error: "O valor mínimo para contribuição é de R$ 1,00." },
         { status: 400 }
       );
     }
@@ -110,15 +110,14 @@ export async function POST(request: Request) {
       success: true,
       data: {
         order: updatedOrder,
-        isMock: paymentResult.isMock,
-        paymentMethod: paymentResult.paymentMethod,
         pixData: paymentResult.pixData,
+        isMock: paymentResult.isMock,
       },
     });
   } catch (error: any) {
     console.error("[API /api/orders] Erro:", error);
     return NextResponse.json(
-      { success: false, error: error.message || "Erro ao processar pedido." },
+      { success: false, error: error.message || "Erro ao criar pedido." },
       { status: 500 }
     );
   }
