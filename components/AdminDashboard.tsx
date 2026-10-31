@@ -1130,8 +1130,8 @@ export function AdminDashboard() {
                   </div>
                   <span className="text-[10px] text-stone-400 mt-1 block">
                     {formCategory === "aberto"
-                      ? "Os convidados não poderão doar menos do que este valor no presente de Valor Livre."
-                      : "Aceita qualquer valor a partir de R$ 1,00"}
+                      ? "Os convidados não poderão doar menos do que este valor no presente de Valor Livre (mínimo R$ 100,00)."
+                      : "Valor configurado para este presente."}
                   </span>
                 </div>
 

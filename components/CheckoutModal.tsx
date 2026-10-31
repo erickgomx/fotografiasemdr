@@ -65,13 +65,13 @@ export function CheckoutModal({ gift, onClose, onSuccess, onGoToMessages }: Chec
   const [mpPublicKey, setMpPublicKey] = useState<string>("");
 
   // Dados do formulário
-  const minRequiredAmount = gift ? (gift.category === "aberto" ? Math.max(1, gift.price) : 1) : 1;
-  const [amount, setAmount] = useState<number>(gift?.price || 1);
+  const minRequiredAmount = gift ? (gift.category === "aberto" ? Math.max(100, gift.price) : 100) : 100;
+  const [amount, setAmount] = useState<number>(gift?.price || 100);
   const [isEditingAmount, setIsEditingAmount] = useState<boolean>(gift?.category === "aberto");
 
   useEffect(() => {
     if (gift) {
-      const initialVal = gift.category === "aberto" ? Math.max(1, gift.price) : Math.max(1, gift.price);
+      const initialVal = gift.category === "aberto" ? Math.max(100, gift.price) : Math.max(100, gift.price);
       setAmount(initialVal);
       setIsEditingAmount(gift.category === "aberto");
     }
@@ -449,12 +449,8 @@ export function CheckoutModal({ gift, onClose, onSuccess, onGoToMessages }: Chec
 
                   <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
                     <span className="text-[10px] text-stone-400 font-medium">Sugestões:</span>
-                    {(minRequiredAmount <= 1
-                      ? [1, 5, 20, 50, 100, 200]
-                      : minRequiredAmount <= 10
-                      ? [minRequiredAmount, 20, 50, 100, 200, 300]
-                      : minRequiredAmount <= 50
-                      ? [minRequiredAmount, 75, 100, 150, 200, 300]
+                    {(minRequiredAmount <= 100
+                      ? [100, 150, 200, 300, 500, 1000]
                       : [minRequiredAmount, Math.round(minRequiredAmount * 1.5), minRequiredAmount * 2, minRequiredAmount * 3, minRequiredAmount * 5]
                     ).map((preset) => (
                       <button

@@ -6,9 +6,9 @@ const GIFTS = [
   // --- COTA ESPECIAL: VALOR ABERTO ---
   {
     title: "Produtor Executivo: Você Define o Orçamento da Produção!",
-    description: "Quer investir o valor que o seu coração (e o seu bolso) mandar? Escolha qualquer quantia livre a partir de R$ 1 e garanta seus créditos no topo como Produtor Executivo Oficial do Casamento!",
+    description: "Quer investir o valor que o seu coração (e o seu bolso) mandar? Escolha qualquer quantia livre a partir de R$ 100 e garanta seus créditos no topo como Produtor Executivo Oficial do Casamento!",
     imageUrl: "https://images.unsplash.com/photo-1518676590629-3dcbd9c5a5c9?auto=format&fit=crop&w=800&q=80",
-    price: 150.0,
+    price: 100.0,
     category: "aberto",
   },
 
