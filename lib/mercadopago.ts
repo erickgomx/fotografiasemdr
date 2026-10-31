@@ -98,12 +98,12 @@ export async function createPayment(input: CreatePaymentInput): Promise<PaymentR
         width: 320,
         margin: 2,
         color: {
-          dark: "#1e1e24",
-          light: "#ffffff",
+          dark: "#000000",
+          light: "#FFFFFF",
         },
       });
 
-      const rawBase64 = qrCodeDataUrl.replace(/^data:image\/png;base64,/, "");
+      const qrCodeBase64 = qrCodeDataUrl.split(",")[1];
 
       return {
         isMock: true,
@@ -112,12 +112,10 @@ export async function createPayment(input: CreatePaymentInput): Promise<PaymentR
         paymentMethod: "PIX",
         pixData: {
           qrCode: mockPixCopiaECola,
-          qrCodeBase64: rawBase64,
-          ticketUrl: `https://fotografiasemdr.vercel.app`,
+          qrCodeBase64,
         },
       };
     } else {
-      // Cartão de Crédito em Mock
       return {
         isMock: true,
         mpPaymentId: mockId,
@@ -127,17 +125,16 @@ export async function createPayment(input: CreatePaymentInput): Promise<PaymentR
     }
   }
 
-  // --- MODO REAL DO MERCADO PAGO ---
-  console.log(`[MercadoPago Adapter] 💳 MODO REAL acionado com credenciais oficiais para ${input.orderId}`);
+  // MODO OFICIAL (MERCADO PAGO API)
   const paymentService = getMPPaymentInstance();
   if (!paymentService) {
-    throw new Error("Instância do Mercado Pago não inicializada.");
+    throw new Error("Cliente oficial do Mercado Pago não configurado. Verifique MP_ACCESS_TOKEN.");
   }
 
   const cleanCpf = input.payerCpf.replace(/\D/g, "");
-  const [firstName, ...lastNameParts] = input.payerName.trim().split(" ");
-  const lastName = lastNameParts.join(" ") || firstName;
-
+  const nameParts = input.payerName.trim().split(" ");
+  const firstName = nameParts[0] || "Convidado";
+  const lastName = nameParts.slice(1).join(" ") || "Especial";
   const notificationUrl = getValidNotificationUrl();
 
   if (input.paymentMethod === "PIX") {
@@ -238,7 +235,38 @@ export async function getPaymentStatus(mpPaymentId: string): Promise<"PENDING" |
   }
 }
 
-function mapMPStatus(status?: string): "PENDING" | "APPROVED" | "REJECTED" {
+/**
+ * Busca pagamentos reais diretamente na conta do Mercado Pago para recuperação automática
+ */
+export async function searchAllMPPayments(): Promise<any[]> {
+  const token = process.env.MP_ACCESS_TOKEN?.trim();
+  if (!token || isMockMode()) return [];
+
+  try {
+    const res = await fetch(
+      "https://api.mercadopago.com/v1/payments/search?sort=date_created&criteria=desc&limit=50",
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        cache: "no-store",
+      }
+    );
+
+    if (!res.ok) {
+      console.error("[MercadoPago Search] Erro HTTP:", res.status);
+      return [];
+    }
+
+    const json = await res.json();
+    return json.results || [];
+  } catch (error) {
+    console.error("[MercadoPago Search] Erro ao buscar pagamentos:", error);
+    return [];
+  }
+}
+
+export function mapMPStatus(status?: string): "PENDING" | "APPROVED" | "REJECTED" {
   switch (status) {
     case "approved":
       return "APPROVED";
