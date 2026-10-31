@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { isMockMode, searchAllMPPayments, mapMPStatus } from "@/lib/mercadopago";
+import { isMockMode, searchAllMPPayments, isWeddingPayment, mapMPStatus } from "@/lib/mercadopago";
 import { isAuthenticated } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -23,10 +23,13 @@ export async function GET() {
     });
 
     // Se o banco estiver sem pedidos mas temos conexão oficial com o Mercado Pago,
-    // recupera automaticamente as transações da conta dos noivos
+    // recupera automaticamente APENAS as transações do casamento dos noivos
     if (orders.length === 0 && !isMockMode()) {
       try {
-        const mpPayments = await searchAllMPPayments();
+        const allMpPayments = await searchAllMPPayments();
+        // FILTRA ESTRITAMENTE APENAS PRESENTES DO SITE DO CASAMENTO
+        const mpPayments = allMpPayments.filter(isWeddingPayment);
+
         if (mpPayments.length > 0) {
           let defaultGift = await prisma.gift.findFirst({ where: { active: true } });
           if (!defaultGift) {

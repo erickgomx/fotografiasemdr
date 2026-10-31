@@ -152,6 +152,11 @@ export async function createPayment(input: CreatePaymentInput): Promise<PaymentR
         },
       },
       external_reference: input.orderId,
+      metadata: {
+        app: "fotografiasemdr",
+        wedding: "erick_itally",
+        order_id: input.orderId,
+      },
     };
 
     if (notificationUrl) {
@@ -196,6 +201,11 @@ export async function createPayment(input: CreatePaymentInput): Promise<PaymentR
         },
       },
       external_reference: input.orderId,
+      metadata: {
+        app: "fotografiasemdr",
+        wedding: "erick_itally",
+        order_id: input.orderId,
+      },
     };
 
     if (notificationUrl) {
@@ -264,6 +274,42 @@ export async function searchAllMPPayments(): Promise<any[]> {
     console.error("[MercadoPago Search] Erro ao buscar pagamentos:", error);
     return [];
   }
+}
+
+/**
+ * Verifica se um pagamento do Mercado Pago pertence estritamente ao casamento Erick & Itally
+ */
+export function isWeddingPayment(mp: any): boolean {
+  if (!mp) return false;
+
+  // 1. Identificação via Metadata gravada pelo site
+  if (
+    mp.metadata?.app === "fotografiasemdr" ||
+    mp.metadata?.wedding === "erick_itally"
+  ) {
+    return true;
+  }
+
+  // 2. Identificação via Descrição do pagamento gerada pelo checkout
+  const desc = (mp.description || "").toLowerCase();
+  if (
+    desc.includes("casamento erick & itally") ||
+    desc.includes("casamento erick e itally") ||
+    desc.startsWith("presente:")
+  ) {
+    return true;
+  }
+
+  // 3. Identificação via external_reference (UUID do pedido gerado pelo Prisma)
+  if (
+    mp.external_reference &&
+    (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(mp.external_reference) ||
+      mp.external_reference.startsWith("ei_"))
+  ) {
+    return true;
+  }
+
+  return false;
 }
 
 export function mapMPStatus(status?: string): "PENDING" | "APPROVED" | "REJECTED" {

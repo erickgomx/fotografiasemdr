@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { isAuthenticated } from "@/lib/auth";
-import { getPaymentStatus, searchAllMPPayments, mapMPStatus } from "@/lib/mercadopago";
+import { getPaymentStatus, searchAllMPPayments, isWeddingPayment, mapMPStatus } from "@/lib/mercadopago";
 
 export const dynamic = "force-dynamic";
 
@@ -13,11 +13,39 @@ export async function POST() {
   try {
     let recoveredCount = 0;
     let updatedCount = 0;
+    let purgedCount = 0;
 
-    // 1. Busca os pagamentos reais diretamente nos servidores do Mercado Pago
-    const mpPayments = await searchAllMPPayments();
+    // 1. Busca transações recentes da conta do Mercado Pago
+    const allMpPayments = await searchAllMPPayments();
 
-    // Garante que haja ao menos um presente para associar
+    // 2. FILTRA ESTRITAMENTE APENAS O QUE É PRESENTE DO CASAMENTO
+    const mpPayments = allMpPayments.filter(isWeddingPayment);
+
+    // 3. Identifica qualquer transação pessoal que possa ter sido importada por engano
+    const nonWeddingMpIds = allMpPayments
+      .filter((mp) => !isWeddingPayment(mp))
+      .map((mp) => String(mp.id));
+
+    if (nonWeddingMpIds.length > 0) {
+      // Remove recados vinculados a pagamentos não relacionados ao casamento
+      await prisma.guestMessage.deleteMany({
+        where: {
+          order: {
+            mpPaymentId: { in: nonWeddingMpIds },
+          },
+        },
+      });
+
+      // Remove pedidos não relacionados ao casamento
+      const deleteResult = await prisma.order.deleteMany({
+        where: {
+          mpPaymentId: { in: nonWeddingMpIds },
+        },
+      });
+      purgedCount = deleteResult.count;
+    }
+
+    // 4. Garante que haja ao menos um presente para associar
     let defaultGift = await prisma.gift.findFirst({ where: { active: true } });
     if (!defaultGift) {
       defaultGift = await prisma.gift.create({
@@ -32,12 +60,11 @@ export async function POST() {
       });
     }
 
-    // 2. Itera sobre cada pagamento registrado no Mercado Pago
+    // 5. Itera e sincroniza APENAS pagamentos legítimos do casamento
     for (const mp of mpPayments) {
       const mpIdStr = String(mp.id);
       const realStatus = mapMPStatus(mp.status);
 
-      // Extrai dados do pagador
       const payerName =
         [mp.payer?.first_name, mp.payer?.last_name].filter(Boolean).join(" ").trim() ||
         mp.payer?.email ||
@@ -50,14 +77,12 @@ export async function POST() {
       const createdAt = mp.date_created ? new Date(mp.date_created) : new Date();
       const message = mp.description || null;
 
-      // Procura se já existe no banco
       const existing = await prisma.order.findFirst({
         where: { mpPaymentId: mpIdStr },
         include: { guestMessage: true },
       });
 
       if (!existing) {
-        // Tenta achar um presente pelo título na descrição
         let matchedGift = defaultGift;
         if (mp.description) {
           const found = await prisma.gift.findFirst({
@@ -87,7 +112,6 @@ export async function POST() {
           },
         });
 
-        // Se estiver aprovado e tiver recado, coloca no mural
         if (realStatus === "APPROVED" && message) {
           await prisma.guestMessage.create({
             data: {
@@ -101,7 +125,6 @@ export async function POST() {
 
         recoveredCount++;
       } else {
-        // Se já existe, atualiza o status se mudou
         if (existing.status !== realStatus) {
           await prisma.order.update({
             where: { id: existing.id },
@@ -124,32 +147,12 @@ export async function POST() {
       }
     }
 
-    // 3. Verifica também pedidos já no banco que talvez não tenham vindo no search
-    const localOrders = await prisma.order.findMany({
-      where: {
-        mpPaymentId: { not: null },
-      },
-      include: { guestMessage: true },
-    });
-
-    for (const order of localOrders) {
-      if (order.mpPaymentId && !order.mpPaymentId.startsWith("mock_mp_")) {
-        const liveStatus = await getPaymentStatus(order.mpPaymentId);
-        if (order.status !== liveStatus) {
-          await prisma.order.update({
-            where: { id: order.id },
-            data: { status: liveStatus },
-          });
-          updatedCount++;
-        }
-      }
-    }
-
     return NextResponse.json({
       success: true,
-      message: `Sincronização concluída com sucesso! ${recoveredCount} pedidos resgatados diretamente do Mercado Pago e ${updatedCount} pedidos com status atualizado.`,
+      message: `Sincronização limpa concluída! Apenas presentes do casamento foram mantidos (${recoveredCount} novos presentes resgatados, ${updatedCount} atualizados${purgedCount > 0 ? `, e ${purgedCount} transações pessoais removidas` : ""}).`,
       recoveredCount,
       updatedCount,
+      purgedCount,
     });
   } catch (error: any) {
     console.error("[Admin Sync All] Erro:", error);
