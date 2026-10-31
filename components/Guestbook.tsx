@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { RefreshCw, Gift } from "lucide-react";
+import { RefreshCw, MessageSquareQuote } from "lucide-react";
 
 interface GuestMessageItem {
   id: string;
@@ -103,23 +103,17 @@ export function Guestbook({ onBackToGifts }: GuestbookProps) {
             return (
               <div
                 key={item.id}
-                className="bg-white rounded-2xl p-6 border border-stone-200/70 shadow-xs hover:border-stone-300 transition-colors flex flex-col justify-between"
+                className="bg-white rounded-2xl p-6 sm:p-7 border border-stone-200/80 shadow-xs hover:border-stone-300 transition-colors flex flex-col justify-between"
               >
                 <div>
-                  {item.order?.gift && (
-                    <div className="mb-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-stone-100 text-[10px] font-medium text-stone-600">
-                      <Gift className="w-3 h-3 text-stone-500" />
-                      <span className="truncate max-w-[200px]">{item.order.gift.title}</span>
-                    </div>
-                  )}
-
-                  <p className="text-xs sm:text-sm text-stone-700 leading-relaxed font-serif italic">
+                  <MessageSquareQuote className="w-5 h-5 text-stone-300 mb-3" />
+                  <p className="text-xs sm:text-sm text-stone-800 leading-relaxed font-serif italic">
                     "{item.message}"
                   </p>
                 </div>
 
-                <div className="mt-5 pt-3 border-t border-stone-100 flex items-center justify-between text-xs">
-                  <span className="font-semibold text-stone-900">{item.name}</span>
+                <div className="mt-6 pt-4 border-t border-stone-100 flex items-center justify-between text-xs">
+                  <span className="font-semibold text-stone-900 tracking-tight">{item.name}</span>
                   <span className="text-[10px] text-stone-400">{formattedDate}</span>
                 </div>
               </div>
