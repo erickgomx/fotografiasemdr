@@ -9,11 +9,28 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const category = searchParams.get("category");
 
-    // Auto-seed if database is empty
+    // Auto-seed se o banco estiver vazio
     const count = await prisma.gift.count();
     if (count === 0) {
       for (const item of INITIAL_GIFTS) {
         await prisma.gift.create({ data: item });
+      }
+    } else {
+      // Sincroniza automaticamente se houver novas fotos no catálogo
+      const checkFirst = await prisma.gift.findFirst({
+        where: { title: INITIAL_GIFTS[0].title },
+      });
+      if (checkFirst && checkFirst.imageUrl !== INITIAL_GIFTS[0].imageUrl) {
+        for (const item of INITIAL_GIFTS) {
+          await prisma.gift.updateMany({
+            where: { title: item.title },
+            data: {
+              imageUrl: item.imageUrl,
+              description: item.description,
+              category: item.category,
+            },
+          });
+        }
       }
     }
 

@@ -18,6 +18,16 @@ export async function POST() {
       });
       if (!exists) {
         await prisma.gift.create({ data: item });
+      } else {
+        await prisma.gift.update({
+          where: { id: exists.id },
+          data: {
+            imageUrl: item.imageUrl,
+            description: item.description,
+            price: item.price,
+            category: item.category,
+          },
+        });
       }
     }
 
@@ -27,7 +37,7 @@ export async function POST() {
 
     return NextResponse.json({
       success: true,
-      message: "Lista de presentes sincronizada com sucesso!",
+      message: "Catálogo de presentes atualizado com fotos cinematográficas!",
       count: gifts.length,
     });
   } catch (error: any) {
