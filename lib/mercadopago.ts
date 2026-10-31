@@ -35,6 +35,7 @@ export interface CreatePaymentInput {
   paymentMethod: "PIX" | "CREDIT_CARD";
   installments?: number;
   cardToken?: string;
+  paymentMethodId?: string;
 }
 
 export interface PaymentResult {
@@ -89,11 +90,9 @@ export async function createPayment(input: CreatePaymentInput): Promise<PaymentR
     const mockId = `mock_mp_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
 
     if (input.paymentMethod === "PIX") {
-      // Gera payload Pix realista de teste (BR Code EMVco compatível)
       const sanitizedAmount = input.amount.toFixed(2);
       const mockPixCopiaECola = `00020126580014br.gov.bcb.pix0136casamento-${input.orderId.slice(0, 8)}@presentes.mock520400005303986540${sanitizedAmount}5802BR5924Casamento Erick e Itally6009Sao Paulo62070503***6304MOCK`;
 
-      // Gera QR Code Base64 real para a interface exibir
       const qrCodeDataUrl = await QRCode.toDataURL(mockPixCopiaECola, {
         errorCorrectionLevel: "M",
         width: 320,
@@ -104,7 +103,6 @@ export async function createPayment(input: CreatePaymentInput): Promise<PaymentR
         },
       });
 
-      // Retira o prefixo data:image/png;base64, para compatibilidade com o formato do MP
       const rawBase64 = qrCodeDataUrl.replace(/^data:image\/png;base64,/, "");
 
       return {
@@ -184,13 +182,13 @@ export async function createPayment(input: CreatePaymentInput): Promise<PaymentR
       },
     };
   } else {
-    // Cartão de Crédito Real
+    // Cartão de Crédito Real (usando token temporário criado pelo MercadoPago.js)
     const paymentBody: any = {
       transaction_amount: Number(input.amount.toFixed(2)),
       token: input.cardToken,
       description: input.description,
-      installments: input.installments || 1,
-      payment_method_id: "credit_card",
+      installments: Number(input.installments) || 1,
+      payment_method_id: input.paymentMethodId || "visa",
       payer: {
         email: input.payerEmail,
         first_name: firstName,
@@ -245,7 +243,7 @@ function mapMPStatus(status?: string): "PENDING" | "APPROVED" | "REJECTED" {
     case "approved":
       return "APPROVED";
     case "rejected":
-      case "cancelled":
+    case "cancelled":
       return "REJECTED";
     default:
       return "PENDING";

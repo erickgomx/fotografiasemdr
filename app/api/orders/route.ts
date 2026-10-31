@@ -15,6 +15,7 @@ export async function POST(request: Request) {
       paymentMethod = "PIX",
       installments = 1,
       cardToken,
+      paymentMethodId,
       customAmount,
     } = body;
 
@@ -78,6 +79,7 @@ export async function POST(request: Request) {
       paymentMethod: order.paymentMethod as "PIX" | "CREDIT_CARD",
       installments: order.installments,
       cardToken,
+      paymentMethodId,
     });
 
     // Atualiza o pedido com o id de pagamento do Mercado Pago (ou mock id) e status
