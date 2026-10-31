@@ -515,12 +515,6 @@ export function AdminDashboard() {
               )}
             </button>
           </form>
-
-          <div className="mt-6 pt-5 border-t border-stone-100 text-center">
-            <span className="text-[11px] text-stone-400 block">
-              Senha padrão: <code className="bg-stone-100 px-1.5 py-0.5 rounded text-stone-700 font-mono text-[10px]">casamento2026</code>
-            </span>
-          </div>
         </div>
       </section>
     );
