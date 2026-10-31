@@ -999,7 +999,7 @@ export function AdminDashboard() {
 
                       <div className="absolute bottom-3 right-3">
                         <span className="px-3 py-1 rounded-xl bg-white/95 backdrop-blur-md text-xs font-bold text-stone-900 shadow-xs">
-                          {formatBRL(gift.price)}
+                          {gift.category === "aberto" ? `Mínimo: ${formatBRL(gift.price)}` : formatBRL(gift.price)}
                         </span>
                       </div>
                     </div>
@@ -1111,7 +1111,7 @@ export function AdminDashboard() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-stone-700 mb-1.5">
-                    Valor (R$)
+                    {formCategory === "aberto" ? "Valor Mínimo da Contribuição (R$)" : "Valor (R$)"}
                   </label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-stone-400">
@@ -1129,7 +1129,9 @@ export function AdminDashboard() {
                     />
                   </div>
                   <span className="text-[10px] text-stone-400 mt-1 block">
-                    Aceita qualquer valor a partir de R$ 1,00
+                    {formCategory === "aberto"
+                      ? "Os convidados não poderão doar menos do que este valor no presente de Valor Livre."
+                      : "Aceita qualquer valor a partir de R$ 1,00"}
                   </span>
                 </div>
 

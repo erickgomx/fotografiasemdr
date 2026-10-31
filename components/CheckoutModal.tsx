@@ -65,12 +65,14 @@ export function CheckoutModal({ gift, onClose, onSuccess, onGoToMessages }: Chec
   const [mpPublicKey, setMpPublicKey] = useState<string>("");
 
   // Dados do formulário
+  const minRequiredAmount = gift ? (gift.category === "aberto" ? Math.max(1, gift.price) : 1) : 1;
   const [amount, setAmount] = useState<number>(gift?.price || 1);
   const [isEditingAmount, setIsEditingAmount] = useState<boolean>(gift?.category === "aberto");
 
   useEffect(() => {
     if (gift) {
-      setAmount(gift.category === "aberto" ? 1 : Math.max(1, gift.price));
+      const initialVal = gift.category === "aberto" ? Math.max(1, gift.price) : Math.max(1, gift.price);
+      setAmount(initialVal);
       setIsEditingAmount(gift.category === "aberto");
     }
   }, [gift]);
@@ -210,8 +212,12 @@ export function CheckoutModal({ gift, onClose, onSuccess, onGoToMessages }: Chec
       return;
     }
 
-    if (!amount || Number(amount) < 1) {
-      setErrorMessage("O valor mínimo para contribuição é de R$ 1,00.");
+    if (!amount || Number(amount) < minRequiredAmount) {
+      setErrorMessage(
+        gift.category === "aberto"
+          ? `O valor mínimo configurado pelos noivos para este presente é de ${formatBRL(minRequiredAmount)}.`
+          : `O valor mínimo para contribuição é de ${formatBRL(minRequiredAmount)}.`
+      );
       return;
     }
 
@@ -427,19 +433,30 @@ export function CheckoutModal({ gift, onClose, onSuccess, onGoToMessages }: Chec
                     </span>
                     <input
                       type="number"
-                      min={1}
+                      min={minRequiredAmount}
                       step={1}
                       required
                       value={amount}
                       onChange={(e) => setAmount(Number(e.target.value))}
-                      placeholder="Valor desejado (ex: 50, 100...)"
+                      placeholder={`Mínimo ${formatBRL(minRequiredAmount)}`}
                       className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-stone-300 bg-white font-bold text-stone-900 text-lg focus:outline-none focus:border-stone-900"
                     />
                   </div>
 
+                  <div className="flex items-center justify-between text-[11px] text-stone-500 font-medium">
+                    <span>Mínimo permitido: <strong className="text-stone-800">{formatBRL(minRequiredAmount)}</strong></span>
+                  </div>
+
                   <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
                     <span className="text-[10px] text-stone-400 font-medium">Sugestões:</span>
-                    {[1, 5, 20, 50, 100, 200].map((preset) => (
+                    {(minRequiredAmount <= 1
+                      ? [1, 5, 20, 50, 100, 200]
+                      : minRequiredAmount <= 10
+                      ? [minRequiredAmount, 20, 50, 100, 200, 300]
+                      : minRequiredAmount <= 50
+                      ? [minRequiredAmount, 75, 100, 150, 200, 300]
+                      : [minRequiredAmount, Math.round(minRequiredAmount * 1.5), minRequiredAmount * 2, minRequiredAmount * 3, minRequiredAmount * 5]
+                    ).map((preset) => (
                       <button
                         key={preset}
                         type="button"

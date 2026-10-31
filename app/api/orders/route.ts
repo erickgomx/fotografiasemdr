@@ -46,9 +46,16 @@ export async function POST(request: Request) {
         ? Number(Number(customAmount).toFixed(2))
         : gift.price;
 
-    if (baseAmount < 1) {
+    const minRequired = gift.category === "aberto" ? Math.max(1, gift.price) : 1;
+    if (baseAmount < minRequired) {
       return NextResponse.json(
-        { success: false, error: "O valor mínimo para contribuição é de R$ 1,00." },
+        {
+          success: false,
+          error: `O valor mínimo para este presente é de ${new Intl.NumberFormat("pt-BR", {
+            style: "currency",
+            currency: "BRL",
+          }).format(minRequired)}.`,
+        },
         { status: 400 }
       );
     }
