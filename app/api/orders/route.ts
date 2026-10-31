@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createPayment, isMockMode } from "@/lib/mercadopago";
+import { calculateCheckoutAmount } from "@/lib/fees";
 
 export async function POST(request: Request) {
   try {
@@ -39,39 +40,47 @@ export async function POST(request: Request) {
       );
     }
 
-    // Calcula valor final (suporte a valor aberto / personalizado)
-    const finalAmount =
+    // Valor base escolhido para o presente (valor líquido dos noivos)
+    const baseAmount =
       customAmount !== undefined && customAmount !== null && Number(customAmount) > 0
         ? Number(Number(customAmount).toFixed(2))
         : gift.price;
 
-    if (finalAmount < 1) {
+    if (baseAmount < 1) {
       return NextResponse.json(
         { success: false, error: "O valor mínimo para contribuição é de R$ 1,00." },
         { status: 400 }
       );
     }
 
-    // Cria o pedido inicial no banco de dados com status PENDING
+    // Calcula o repasse de taxas da operadora (Pix ou Cartão)
+    const normalizedMethod = paymentMethod === "CREDIT_CARD" ? "CREDIT_CARD" : "PIX";
+    const feeCalculation = calculateCheckoutAmount(
+      baseAmount,
+      normalizedMethod,
+      Number(installments) || 1
+    );
+
+    // Salva o pedido com o valor líquido que os noivos recebem
     const order = await prisma.order.create({
       data: {
         giftId: gift.id,
-        amount: finalAmount,
+        amount: feeCalculation.baseAmount, // Salva o valor líquido dos noivos no painel
         payerName: payerName.trim(),
         payerEmail: payerEmail.trim(),
         payerCpf: payerCpf.trim(),
         payerMessage: payerMessage ? payerMessage.trim() : null,
         isAnonymous: Boolean(isAnonymous),
-        paymentMethod: paymentMethod === "CREDIT_CARD" ? "CREDIT_CARD" : "PIX",
+        paymentMethod: normalizedMethod,
         installments: Number(installments) || 1,
         status: "PENDING",
       },
     });
 
-    // Chama o adaptador de pagamento (Mock ou Oficial)
+    // Cobra no Mercado Pago o valor com a taxa inclusa por conta do pagador
     const paymentResult = await createPayment({
       orderId: order.id,
-      amount: finalAmount,
+      amount: feeCalculation.totalAmount, // Valor total cobrado do pagador
       description: `Presente: ${gift.title} - Casamento Erick & Itally`,
       payerName: order.payerName,
       payerEmail: order.payerEmail,
@@ -82,7 +91,7 @@ export async function POST(request: Request) {
       paymentMethodId,
     });
 
-    // Atualiza o pedido com o id de pagamento do Mercado Pago (ou mock id) e status
+    // Atualiza o pedido com o id de pagamento do Mercado Pago
     const updatedOrder = await prisma.order.update({
       where: { id: order.id },
       data: {
@@ -94,7 +103,6 @@ export async function POST(request: Request) {
       },
     });
 
-    // Se o pagamento já nasceu aprovado (ex: cartão mock/real aprovado instantâneo) e tem recado:
     if (updatedOrder.status === "APPROVED" && updatedOrder.payerMessage) {
       const displayName = updatedOrder.isAnonymous ? "Anônimo Apaixonado" : updatedOrder.payerName;
       await prisma.guestMessage.upsert({
@@ -112,6 +120,7 @@ export async function POST(request: Request) {
       success: true,
       data: {
         order: updatedOrder,
+        feeCalculation,
         pixData: paymentResult.pixData,
         isMock: paymentResult.isMock,
       },

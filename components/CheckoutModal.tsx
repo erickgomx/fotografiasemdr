@@ -19,6 +19,7 @@ import {
   Lock,
 } from "lucide-react";
 import { GiftItem } from "./GiftCard";
+import { calculateCheckoutAmount } from "@/lib/fees";
 
 interface CheckoutModalProps {
   gift: GiftItem | null;
@@ -81,7 +82,6 @@ export function CheckoutModal({ gift, onClose, onSuccess, onGoToMessages }: Chec
       .then((data) => {
         if (data.publicKey) {
           setMpPublicKey(data.publicKey);
-          // Pré-carrega o script de segurança do Mercado Pago
           loadMercadoPagoSDK().catch(() => {});
         }
       })
@@ -96,7 +96,7 @@ export function CheckoutModal({ gift, onClose, onSuccess, onGoToMessages }: Chec
   const [paymentMethod, setPaymentMethod] = useState<"PIX" | "CREDIT_CARD">("PIX");
   const [installments, setInstallments] = useState(1);
 
-  // Dados do Cartão (Digitados pelo convidado no navegador - NUNCA SALVOS NO BANCO)
+  // Dados do Cartão (Digitados no navegador - NUNCA SALVOS NO BANCO)
   const [cardNumber, setCardNumber] = useState("");
   const [cardHolder, setCardHolder] = useState("");
   const [cardExpiry, setCardExpiry] = useState("");
@@ -112,6 +112,20 @@ export function CheckoutModal({ gift, onClose, onSuccess, onGoToMessages }: Chec
 
   const [copied, setCopied] = useState(false);
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cálculo das taxas em tempo real (repasse para o pagador)
+  const feeData = calculateCheckoutAmount(
+    amount || 1,
+    paymentMethod,
+    paymentMethod === "CREDIT_CARD" ? installments : 1
+  );
+
+  const formatBRL = (val: number) => {
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(val);
+  };
 
   // Efeito de confetes no sucesso
   const triggerConfetti = () => {
@@ -355,11 +369,6 @@ export function CheckoutModal({ gift, onClose, onSuccess, onGoToMessages }: Chec
 
   if (!gift) return null;
 
-  const currentFormattedPrice = new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(amount);
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
       <div className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-stone-200 overflow-hidden my-auto max-h-[92vh] flex flex-col">
@@ -396,7 +405,7 @@ export function CheckoutModal({ gift, onClose, onSuccess, onGoToMessages }: Chec
                 <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200 text-left space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-stone-800">
-                      Personalizar Valor da Contribuição
+                      Personalizar Valor do Presente
                     </span>
                     {gift.category !== "aberto" && (
                       <button
@@ -407,7 +416,7 @@ export function CheckoutModal({ gift, onClose, onSuccess, onGoToMessages }: Chec
                         }}
                         className="text-[11px] font-medium text-stone-500 hover:text-stone-800 underline"
                       >
-                        Voltar para R$ {gift.price.toFixed(2)}
+                        Voltar para {formatBRL(gift.price)}
                       </button>
                     )}
                   </div>
@@ -449,7 +458,7 @@ export function CheckoutModal({ gift, onClose, onSuccess, onGoToMessages }: Chec
               ) : (
                 <div className="flex items-center justify-between p-3 rounded-2xl bg-stone-50 border border-stone-200/80">
                   <span className="text-xs text-stone-600">
-                    Valor da cota: <strong className="text-stone-900 font-bold">{currentFormattedPrice}</strong>
+                    Valor da cota: <strong className="text-stone-900 font-bold">{formatBRL(amount)}</strong>
                   </span>
                   <button
                     type="button"
@@ -569,7 +578,7 @@ export function CheckoutModal({ gift, onClose, onSuccess, onGoToMessages }: Chec
                     <div>
                       <span className="block text-xs font-bold">Pix Instantâneo</span>
                       <span className={`block text-[10px] ${paymentMethod === "PIX" ? "text-stone-300" : "text-stone-400"}`}>
-                        QR Code e Copia-e-Cola
+                        QR Code dinâmico
                       </span>
                     </div>
                   </button>
@@ -674,12 +683,14 @@ export function CheckoutModal({ gift, onClose, onSuccess, onGoToMessages }: Chec
                       onChange={(e) => setInstallments(Number(e.target.value))}
                       className="w-full px-3 py-2 rounded-xl border border-stone-200 text-xs font-medium text-stone-800 bg-white focus:outline-none focus:border-stone-900"
                     >
-                      <option value={1}>1x de {currentFormattedPrice} (à vista)</option>
-                      <option value={2}>2x de R$ {(amount / 2).toFixed(2)}</option>
-                      <option value={3}>3x de R$ {(amount / 3).toFixed(2)}</option>
-                      <option value={4}>4x de R$ {(amount / 4).toFixed(2)}</option>
-                      <option value={5}>5x de R$ {(amount / 5).toFixed(2)}</option>
-                      <option value={6}>6x de R$ {(amount / 6).toFixed(2)}</option>
+                      {[1, 2, 3, 4, 5, 6].map((num) => {
+                        const optFee = calculateCheckoutAmount(amount, "CREDIT_CARD", num);
+                        return (
+                          <option key={num} value={num}>
+                            {num}x de {formatBRL(optFee.installmentValue)} (Total: {formatBRL(optFee.totalAmount)})
+                          </option>
+                        );
+                      })}
                     </select>
                   </div>
 
@@ -692,6 +703,27 @@ export function CheckoutModal({ gift, onClose, onSuccess, onGoToMessages }: Chec
                 </div>
               )}
 
+              {/* RESUMO DE TAXAS TRANSPARENTE (REPASSE AO PAGADOR) */}
+              <div className="p-3.5 rounded-2xl bg-stone-50 border border-stone-200 space-y-1.5 text-xs text-stone-600">
+                <div className="flex justify-between items-center">
+                  <span>Valor do presente (para os noivos):</span>
+                  <span className="font-semibold text-stone-900">{formatBRL(feeData.baseAmount)}</span>
+                </div>
+                <div className="flex justify-between items-center text-[11px] text-stone-500">
+                  <span>
+                    Taxa da operadora ({paymentMethod === "PIX" ? "0,99% Pix" : `Processamento Cartão ${installments}x`}):
+                  </span>
+                  <span>+{formatBRL(feeData.feeAmount)}</span>
+                </div>
+                <div className="pt-2 border-t border-stone-200 flex justify-between items-center font-bold text-stone-900 text-sm">
+                  <span>Total a pagar:</span>
+                  <span className="text-stone-900">{formatBRL(feeData.totalAmount)}</span>
+                </div>
+                <p className="text-[10px] text-stone-400 text-center pt-1 font-light">
+                  ✨ Os noivos receberão exatamente {formatBRL(feeData.baseAmount)} livres de taxa.
+                </p>
+              </div>
+
               {/* Botão de Envio */}
               <button
                 type="submit"
@@ -701,14 +733,14 @@ export function CheckoutModal({ gift, onClose, onSuccess, onGoToMessages }: Chec
                 {loading ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Processando com segurança...</span>
+                    <span>Processando pagamento seguro...</span>
                   </>
                 ) : (
                   <>
                     <span>
                       {paymentMethod === "PIX"
-                        ? `Gerar Pix de ${currentFormattedPrice}`
-                        : `Pagar ${currentFormattedPrice} no Cartão`}
+                        ? `Gerar Pix de ${formatBRL(feeData.totalAmount)}`
+                        : `Pagar ${formatBRL(feeData.totalAmount)} no Cartão`}
                     </span>
                     <ArrowRight className="w-4 h-4" />
                   </>
