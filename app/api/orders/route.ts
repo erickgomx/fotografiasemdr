@@ -20,10 +20,45 @@ export async function POST(request: Request) {
       customAmount,
     } = body;
 
-    // Validações básicas
+    // Validações básicas de presença
     if (!giftId || !payerName || !payerEmail || !payerCpf) {
       return NextResponse.json(
         { success: false, error: "Preencha todos os campos obrigatórios." },
+        { status: 400 }
+      );
+    }
+
+    const cleanName = String(payerName).trim();
+    const cleanEmail = String(payerEmail).trim().toLowerCase();
+    const cleanCpf = String(payerCpf).replace(/\D/g, "");
+    const cleanMessage = payerMessage ? String(payerMessage).trim() : null;
+
+    // Validação de limites e formatos
+    if (cleanName.length < 2 || cleanName.length > 100) {
+      return NextResponse.json(
+        { success: false, error: "O nome deve ter entre 2 e 100 caracteres." },
+        { status: 400 }
+      );
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(cleanEmail) || cleanEmail.length > 120) {
+      return NextResponse.json(
+        { success: false, error: "Informe um endereço de e-mail válido." },
+        { status: 400 }
+      );
+    }
+
+    if (cleanCpf.length !== 11) {
+      return NextResponse.json(
+        { success: false, error: "CPF inválido. Certifique-se de digitar os 11 números do seu CPF." },
+        { status: 400 }
+      );
+    }
+
+    if (cleanMessage && cleanMessage.length > 500) {
+      return NextResponse.json(
+        { success: false, error: "A mensagem para os noivos deve ter no máximo 500 caracteres." },
         { status: 400 }
       );
     }
@@ -73,10 +108,10 @@ export async function POST(request: Request) {
       data: {
         giftId: gift.id,
         amount: feeCalculation.baseAmount, // Salva o valor líquido dos noivos no painel
-        payerName: payerName.trim(),
-        payerEmail: payerEmail.trim(),
-        payerCpf: payerCpf.trim(),
-        payerMessage: payerMessage ? payerMessage.trim() : null,
+        payerName: cleanName,
+        payerEmail: cleanEmail,
+        payerCpf: cleanCpf,
+        payerMessage: cleanMessage,
         isAnonymous: Boolean(isAnonymous),
         paymentMethod: normalizedMethod,
         installments: Number(installments) || 1,

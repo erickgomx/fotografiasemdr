@@ -1,11 +1,20 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { isMockMode } from "@/lib/mercadopago";
 
 export async function POST(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
+    // Bloqueio rigoroso de segurança: proibido em produção ou com credenciais reais
+    if (process.env.NODE_ENV === "production" || !isMockMode()) {
+      return NextResponse.json(
+        { success: false, error: "A simulação manual de pagamentos está desativada neste ambiente." },
+        { status: 403 }
+      );
+    }
+
     const { id } = params;
     const body = await request.json().catch(() => ({}));
     const action = body.action || "approve"; // "approve" | "reject"
@@ -22,6 +31,14 @@ export async function POST(
       return NextResponse.json(
         { success: false, error: "Pedido não encontrado para simulação." },
         { status: 404 }
+      );
+    }
+
+    // Apenas pedidos mock locais podem ser simulados
+    if (!order.mpPaymentId || !order.mpPaymentId.startsWith("mock_mp_")) {
+      return NextResponse.json(
+        { success: false, error: "Apenas pedidos de simulação locais podem ser aprovados manualmente." },
+        { status: 400 }
       );
     }
 

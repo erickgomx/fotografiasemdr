@@ -2,6 +2,26 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getPaymentStatus, isMockMode } from "@/lib/mercadopago";
 
+// Remove dados sensíveis (CPF, Email) de respostas públicas (Conformidade LGPD)
+function sanitizePublicOrder(order: any) {
+  return {
+    id: order.id,
+    status: order.status,
+    amount: order.amount,
+    paymentMethod: order.paymentMethod,
+    isAnonymous: order.isAnonymous,
+    createdAt: order.createdAt,
+    gift: order.gift
+      ? {
+          id: order.gift.id,
+          title: order.gift.title,
+          imageUrl: order.gift.imageUrl,
+          category: order.gift.category,
+        }
+      : null,
+  };
+}
+
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
@@ -51,7 +71,7 @@ export async function GET(
 
         return NextResponse.json({
           success: true,
-          data: updated,
+          data: sanitizePublicOrder(updated),
           isMock: false,
         });
       }
@@ -59,7 +79,7 @@ export async function GET(
 
     return NextResponse.json({
       success: true,
-      data: order,
+      data: sanitizePublicOrder(order),
       isMock: isMockMode(),
     });
   } catch (error: any) {
