@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { isAuthenticated } from "@/lib/auth";
 import { getPaymentStatus, isMockMode } from "@/lib/mercadopago";
-import { addExcludedPayment, isPaymentExcluded } from "@/lib/exclusions";
+import { addExcludedPayment, addExcludedEmail, isPaymentExcluded, isEmailExcluded } from "@/lib/exclusions";
 
 // Consulta o status real no Mercado Pago
 export async function GET(
@@ -61,7 +61,7 @@ export async function GET(
       });
     }
 
-    // Se no Mercado Pago ESTIVER aprovado e tiver recado
+    // Se no Mercado Pago ESTIVER aprovado e tiver recado real digitado
     if (realStatus === "APPROVED" && updated.payerMessage && !updated.guestMessage) {
       const displayName = updated.isAnonymous ? "Anônimo Apaixonado" : updated.payerName;
       await prisma.guestMessage.create({
@@ -118,19 +118,19 @@ export async function DELETE(
       where: { orderId: id },
     });
 
-    // 2. Se tiver mpPaymentId, registra na lista de exclusões e marca como DELETED
+    // 2. Registra na lista de exclusões permanente para nunca ser ressuscitado pelo sync
     if (order.mpPaymentId) {
       addExcludedPayment(order.mpPaymentId);
-
-      await prisma.order.update({
-        where: { id },
-        data: { status: "DELETED" },
-      });
-    } else {
-      await prisma.order.delete({
-        where: { id },
-      });
     }
+    if (order.payerEmail) {
+      addExcludedEmail(order.payerEmail);
+    }
+
+    // 3. Marca como DELETED no banco para rastreabilidade e evitar re-inserção
+    await prisma.order.update({
+      where: { id },
+      data: { status: "DELETED" },
+    });
 
     return NextResponse.json({
       success: true,

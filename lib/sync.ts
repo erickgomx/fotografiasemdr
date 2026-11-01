@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { searchAllMPPayments, isWeddingPayment, mapMPStatus } from "@/lib/mercadopago";
-import { isPaymentExcluded, addExcludedPayment } from "@/lib/exclusions";
+import { isPaymentExcluded, addExcludedPayment, isEmailExcluded, addExcludedEmail } from "@/lib/exclusions";
 
 // Cache em memória para evitar chamadas redundantes em segundos seguidos
 let lastSyncTimestamp = 0;
@@ -14,6 +14,17 @@ export async function syncWeddingOrdersAndMessages(force = false) {
   lastSyncTimestamp = now;
 
   try {
+    // 0. Limpeza preventiva de mensagens padrão falsas ou de pedidos deletados/excluídos
+    await prisma.guestMessage.deleteMany({
+      where: {
+        OR: [
+          { message: "Muitas felicidades, amor e prosperidade aos noivos Erick & Itally!" },
+          { order: { payerEmail: "computadordoerick@gmail.com" } },
+          { order: { status: "DELETED" } },
+        ],
+      },
+    }).catch(() => {});
+
     const allMpPayments = await searchAllMPPayments();
     if (!allMpPayments || allMpPayments.length === 0) {
       return { recoveredCount: 0, updatedCount: 0 };
@@ -57,11 +68,17 @@ export async function syncWeddingOrdersAndMessages(force = false) {
 
     for (const mp of mpPayments) {
       const mpIdStr = String(mp.id);
+      const payerEmail = (mp.payer?.email || "").trim().toLowerCase();
 
-      // VERIFICA SE O PAGAMENTO FOI EXCLUÍDO PELOS NOIVOS
-      if (isPaymentExcluded(mpIdStr)) {
+      // VERIFICA SE O PAGAMENTO OU EMAIL FOI EXCLUÍDO PELOS NOIVOS
+      if (isPaymentExcluded(mpIdStr) || isEmailExcluded(payerEmail)) {
         const old = await prisma.order.findFirst({
-          where: { mpPaymentId: mpIdStr },
+          where: {
+            OR: [
+              { mpPaymentId: mpIdStr },
+              ...(payerEmail ? [{ payerEmail: payerEmail }] : []),
+            ],
+          },
           include: { guestMessage: true },
         });
         if (old) {
@@ -82,15 +99,15 @@ export async function syncWeddingOrdersAndMessages(force = false) {
         : ([mp.payer?.first_name, mp.payer?.last_name].filter(Boolean).join(" ").trim() ||
            mp.payer?.email ||
            "Convidado Especial");
-      const payerEmail = mp.payer?.email || "";
       const payerCpf = mp.payer?.identification?.number || "";
       const amount = Number(mp.transaction_amount) || 0;
       const isPix = mp.payment_type_id === "bank_transfer" || mp.payment_method_id === "pix";
       const paymentMethod = isPix ? "PIX" : "CREDIT_CARD";
       const createdAt = mp.date_created ? new Date(mp.date_created) : new Date();
 
-      // Recado deixado pelo convidado
-      const message = mp.metadata?.payer_message || null;
+      // Recado deixado pelo convidado (apenas se realmente foi digitado)
+      const rawMessage = mp.metadata?.payer_message;
+      const message = rawMessage && String(rawMessage).trim().length > 0 ? String(rawMessage).trim() : null;
 
       const existing = await prisma.order.findFirst({
         where: { mpPaymentId: mpIdStr },
@@ -123,13 +140,14 @@ export async function syncWeddingOrdersAndMessages(force = false) {
           },
         });
 
-        if (realStatus === "APPROVED") {
-          const finalMsg = message || "Muitas felicidades, amor e prosperidade aos noivos Erick & Itally!";
+        // SÓ cria recado se o convidado realmente tiver digitado uma mensagem!
+        // NUNCA cria mensagens padrão automáticas
+        if (realStatus === "APPROVED" && message) {
           await prisma.guestMessage.create({
             data: {
               orderId: newOrder.id,
               name: payerName,
-              message: finalMsg,
+              message,
               createdAt,
             },
           }).catch(() => {});
@@ -137,9 +155,10 @@ export async function syncWeddingOrdersAndMessages(force = false) {
 
         recoveredCount++;
       } else {
-        // Se já existe e está marcado como DELETED, nunca recrie
+        // Se já existe e está marcado como DELETED, nunca recrie e assegure que está marcado nas exclusões
         if (existing.status === "DELETED") {
           addExcludedPayment(mpIdStr);
+          if (payerEmail) addExcludedEmail(payerEmail);
           if (existing.guestMessage) {
             await prisma.guestMessage.deleteMany({ where: { orderId: existing.id } }).catch(() => {});
           }
@@ -154,13 +173,14 @@ export async function syncWeddingOrdersAndMessages(force = false) {
           updatedCount++;
         }
 
-        if (realStatus === "APPROVED" && !existing.guestMessage) {
-          const finalMsg = existing.payerMessage || message || "Muitas felicidades, amor e prosperidade aos noivos Erick & Itally!";
+        // Se estiver aprovado e tiver mensagem real do convidado, sincroniza
+        const userMsg = existing.payerMessage?.trim() || message;
+        if (realStatus === "APPROVED" && userMsg && !existing.guestMessage) {
           await prisma.guestMessage.create({
             data: {
               orderId: existing.id,
               name: existing.isAnonymous ? "Anônimo Apaixonado" : existing.payerName,
-              message: finalMsg,
+              message: userMsg,
               createdAt: existing.createdAt,
             },
           }).catch(() => {});

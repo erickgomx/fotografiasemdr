@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { isMockMode } from "@/lib/mercadopago";
 import { isAuthenticated } from "@/lib/auth";
 import { syncWeddingOrdersAndMessages } from "@/lib/sync";
+import { getExcludedEmails } from "@/lib/exclusions";
 
 export const dynamic = "force-dynamic";
 
@@ -15,8 +16,13 @@ export async function GET() {
   }
 
   try {
+    const excludedEmails = Array.from(getExcludedEmails());
+
     let orders = await prisma.order.findMany({
-      where: { status: { not: "DELETED" } },
+      where: {
+        status: { not: "DELETED" },
+        payerEmail: { notIn: excludedEmails },
+      },
       orderBy: { createdAt: "desc" },
       include: {
         gift: true,
@@ -30,7 +36,10 @@ export async function GET() {
       try {
         await syncWeddingOrdersAndMessages(true);
         orders = await prisma.order.findMany({
-          where: { status: { not: "DELETED" } },
+          where: {
+            status: { not: "DELETED" },
+            payerEmail: { notIn: excludedEmails },
+          },
           orderBy: { createdAt: "desc" },
           include: {
             gift: true,

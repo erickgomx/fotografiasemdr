@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { syncWeddingOrdersAndMessages } from "@/lib/sync";
+import { getExcludedEmails } from "@/lib/exclusions";
 
 export const dynamic = "force-dynamic";
 
@@ -9,6 +10,19 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const forceRefresh = searchParams.get("refresh") === "true";
 
+    const excludedEmails = Array.from(getExcludedEmails());
+
+    // 0. Limpeza preventiva no banco de recados padrão falsos e de emails excluídos
+    await prisma.guestMessage.deleteMany({
+      where: {
+        OR: [
+          { message: "Muitas felicidades, amor e prosperidade aos noivos Erick & Itally!" },
+          { order: { payerEmail: { in: excludedEmails } } },
+          { order: { status: "DELETED" } },
+        ],
+      },
+    }).catch(() => {});
+
     // 1. Se o banco local estiver vazio ou o usuário pediu para atualizar o mural,
     // sincroniza automaticamente direto da API do Mercado Pago
     const currentCount = await prisma.guestMessage.count();
@@ -16,22 +30,26 @@ export async function GET(request: Request) {
       await syncWeddingOrdersAndMessages(forceRefresh);
     }
 
-    // 2. Garante também que qualquer pedido aprovado no banco que tenha recado esteja no mural
-    const approvedOrdersWithMsg = await prisma.order.findMany({
+    // 2. Garante apenas que pedidos aprovados que REALMENTE tenham recado escrito pelo convidado estejam no mural
+    const approvedOrdersWithRealMsg = await prisma.order.findMany({
       where: {
         status: "APPROVED",
+        payerEmail: { notIn: excludedEmails },
         guestMessage: null,
+        payerMessage: { not: null },
       },
     });
 
-    for (const ord of approvedOrdersWithMsg) {
+    for (const ord of approvedOrdersWithRealMsg) {
+      const realMsg = ord.payerMessage?.trim();
+      if (!realMsg || realMsg.length === 0) continue;
+
       const displayName = ord.isAnonymous ? "Anônimo Apaixonado" : ord.payerName;
-      const finalMsg = ord.payerMessage?.trim() || "Muitas felicidades, amor e prosperidade aos noivos Erick & Itally!";
       await prisma.guestMessage.create({
         data: {
           orderId: ord.id,
           name: displayName,
-          message: finalMsg,
+          message: realMsg,
           createdAt: ord.createdAt,
         },
       }).catch(() => {});
@@ -42,6 +60,10 @@ export async function GET(request: Request) {
       where: {
         order: {
           status: "APPROVED",
+          payerEmail: { notIn: excludedEmails },
+        },
+        message: {
+          not: "Muitas felicidades, amor e prosperidade aos noivos Erick & Itally!",
         },
       },
       orderBy: { createdAt: "desc" },

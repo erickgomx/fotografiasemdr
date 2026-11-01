@@ -260,15 +260,34 @@ export function AdminDashboard() {
     }
   };
 
-  // Exclui pedido de teste
+  // Exclui pedido definitivamente
   const handleDeleteOrder = async (orderId: string) => {
-    if (!confirm("Deseja realmente excluir este pedido de teste?")) return;
+    if (!confirm("Deseja realmente excluir este pedido? Ele será removido definitivamente do painel e do mural de recados.")) return;
 
     setActionLoadingId(orderId);
     try {
       const res = await fetch(`/api/admin/orders/${orderId}`, { method: "DELETE" });
       const json = await res.json();
       if (json.success) {
+        setData((prev) => {
+          if (!prev) return null;
+          const remainingOrders = prev.orders.filter((o) => o.id !== orderId);
+          const approved = remainingOrders.filter((o) => o.status === "APPROVED");
+          const totalRaised = approved.reduce((acc, curr) => acc + curr.amount, 0);
+          return {
+            ...prev,
+            orders: remainingOrders,
+            metrics: {
+              ...prev.metrics,
+              totalOrders: remainingOrders.length,
+              approvedCount: approved.length,
+              pendingCount: remainingOrders.filter((o) => o.status === "PENDING").length,
+              rejectedCount: remainingOrders.filter((o) => o.status === "REJECTED").length,
+              totalRaised,
+              averageContribution: approved.length > 0 ? totalRaised / approved.length : 0,
+            },
+          };
+        });
         await fetchMetrics();
       }
     } catch (e) {
