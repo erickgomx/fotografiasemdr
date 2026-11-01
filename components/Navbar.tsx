@@ -24,7 +24,7 @@ export function Navbar({ activeTab, onTabChange }: NavbarProps) {
               Erick &amp; Itally
             </span>
             <span className="hidden sm:block text-[10px] text-stone-400 tracking-widest uppercase font-medium">
-              15 • Novembro • 2026
+              Junho • 2027
             </span>
           </div>
         </div>

@@ -1,8 +1,8 @@
 import crypto from "crypto";
 import { cookies } from "next/headers";
 
-const SECRET = process.env.AUTH_SECRET || "erick-itally-wedding-secret-key-2026";
-export const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "casamento2026";
+const SECRET = process.env.AUTH_SECRET || "erick-itally-wedding-secret-key-2027";
+export const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "casamento2027";
 export const AUTH_COOKIE_NAME = "ei_admin_token";
 
 export function generateAuthToken(): string {

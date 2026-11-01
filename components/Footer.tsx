@@ -9,7 +9,7 @@ export function Footer() {
           Obrigado por celebrar esse momento especial com a gente e por fazer parte da nossa história.
         </p>
         <div className="pt-2 text-[10px] uppercase tracking-widest text-stone-400">
-          Novembro 2026 • Fotografia &amp; Filmmaking
+          Junho 2027 • Fotografia &amp; Filmmaking
         </div>
       </div>
     </footer>

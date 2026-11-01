@@ -98,7 +98,7 @@ export function GiftCard({ gift, onSelect }: GiftCardProps) {
         {/* Marca d'água sutil de película */}
         <div className="absolute bottom-2 right-3 pointer-events-none">
           <span className="text-[9px] uppercase tracking-widest text-white/50 font-mono">
-            {isSpecial ? "PRODUCER // 2026" : "CINE // 24FPS"}
+            {isSpecial ? "PRODUCER // 2027" : "CINE // 24FPS"}
           </span>
         </div>
       </div>

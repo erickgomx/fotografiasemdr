@@ -22,7 +22,7 @@ export function Hero({ onScrollToGifts, onOpenMessages }: HeroProps) {
         {/* Claquete / Take Badge com ponto REC pulsante */}
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/80 border border-stone-200/80 shadow-xs backdrop-blur-sm mb-5 text-[10px] sm:text-[11px] font-semibold uppercase tracking-widest text-stone-600">
           <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.7)]" />
-          <span>TAKE 01 • ROLO 2026 • PRODUÇÃO ERICK &amp; ITALLY</span>
+          <span>TAKE 01 • ROLO 2027 • PRODUÇÃO ERICK &amp; ITALLY</span>
         </div>
 
         {/* Título Principal Editorial Cinematográfico */}
