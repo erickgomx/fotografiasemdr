@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { isAuthenticated } from "@/lib/auth";
 import { getPaymentStatus, isMockMode } from "@/lib/mercadopago";
+import { addExcludedPayment, isPaymentExcluded } from "@/lib/exclusions";
 
-// Consulta o status real no Mercado Pago ou exclui pedido
+// Consulta o status real no Mercado Pago
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
@@ -21,6 +22,16 @@ export async function GET(
 
     if (!order) {
       return NextResponse.json({ success: false, error: "Pedido não encontrado" }, { status: 404 });
+    }
+
+    // Se o pedido foi excluído anteriormente
+    if (order.status === "DELETED") {
+      return NextResponse.json({
+        success: true,
+        data: order,
+        message: "Este pedido foi excluído pelos noivos.",
+        isRealPayment: false,
+      });
     }
 
     // Se for pedido de simulação mock
@@ -81,7 +92,7 @@ export async function GET(
   }
 }
 
-// Exclui pedido de teste ou indevido
+// Exclui pedido definitivamente para que nunca mais reapareça
 export async function DELETE(
   request: Request,
   { params }: { params: { id: string } }
@@ -93,19 +104,37 @@ export async function DELETE(
   try {
     const { id } = params;
 
-    // Remove mensagem vinculada se existir
+    const order = await prisma.order.findUnique({
+      where: { id },
+      include: { guestMessage: true },
+    });
+
+    if (!order) {
+      return NextResponse.json({ success: false, error: "Pedido não encontrado." }, { status: 404 });
+    }
+
+    // 1. Remove qualquer recado do mural imediatamente
     await prisma.guestMessage.deleteMany({
       where: { orderId: id },
     });
 
-    // Remove o pedido
-    await prisma.order.delete({
-      where: { id },
-    });
+    // 2. Se tiver mpPaymentId, registra na lista de exclusões e marca como DELETED
+    if (order.mpPaymentId) {
+      addExcludedPayment(order.mpPaymentId);
+
+      await prisma.order.update({
+        where: { id },
+        data: { status: "DELETED" },
+      });
+    } else {
+      await prisma.order.delete({
+        where: { id },
+      });
+    }
 
     return NextResponse.json({
       success: true,
-      message: "Pedido removido com sucesso.",
+      message: "Pedido e recado excluídos definitivamente com sucesso.",
     });
   } catch (error: any) {
     console.error("[Admin Delete Order] Erro:", error);

@@ -37,8 +37,13 @@ export async function GET(request: Request) {
       }).catch(() => {});
     }
 
-    // 3. Retorna todas as mensagens do mural em ordem cronológica decrescente
+    // 3. Retorna todas as mensagens legítimas do mural em ordem cronológica decrescente
     const messages = await prisma.guestMessage.findMany({
+      where: {
+        order: {
+          status: "APPROVED",
+        },
+      },
       orderBy: { createdAt: "desc" },
       take: 50,
     });

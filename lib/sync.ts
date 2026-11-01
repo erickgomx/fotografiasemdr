@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { searchAllMPPayments, isWeddingPayment, mapMPStatus } from "@/lib/mercadopago";
+import { isPaymentExcluded, addExcludedPayment } from "@/lib/exclusions";
 
 // Cache em memória para evitar chamadas redundantes em segundos seguidos
 let lastSyncTimestamp = 0;
@@ -56,6 +57,24 @@ export async function syncWeddingOrdersAndMessages(force = false) {
 
     for (const mp of mpPayments) {
       const mpIdStr = String(mp.id);
+
+      // VERIFICA SE O PAGAMENTO FOI EXCLUÍDO PELOS NOIVOS
+      if (isPaymentExcluded(mpIdStr)) {
+        const old = await prisma.order.findFirst({
+          where: { mpPaymentId: mpIdStr },
+          include: { guestMessage: true },
+        });
+        if (old) {
+          if (old.guestMessage) {
+            await prisma.guestMessage.deleteMany({ where: { orderId: old.id } }).catch(() => {});
+          }
+          if (old.status !== "DELETED") {
+            await prisma.order.update({ where: { id: old.id }, data: { status: "DELETED" } }).catch(() => {});
+          }
+        }
+        continue;
+      }
+
       const realStatus = mapMPStatus(mp.status);
       const isAnon = Boolean(mp.metadata?.is_anonymous);
       const payerName = isAnon
@@ -118,6 +137,15 @@ export async function syncWeddingOrdersAndMessages(force = false) {
 
         recoveredCount++;
       } else {
+        // Se já existe e está marcado como DELETED, nunca recrie
+        if (existing.status === "DELETED") {
+          addExcludedPayment(mpIdStr);
+          if (existing.guestMessage) {
+            await prisma.guestMessage.deleteMany({ where: { orderId: existing.id } }).catch(() => {});
+          }
+          continue;
+        }
+
         if (existing.status !== realStatus) {
           await prisma.order.update({
             where: { id: existing.id },

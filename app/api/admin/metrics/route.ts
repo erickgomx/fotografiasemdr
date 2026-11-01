@@ -16,6 +16,7 @@ export async function GET() {
 
   try {
     let orders = await prisma.order.findMany({
+      where: { status: { not: "DELETED" } },
       orderBy: { createdAt: "desc" },
       include: {
         gift: true,
@@ -29,6 +30,7 @@ export async function GET() {
       try {
         await syncWeddingOrdersAndMessages(true);
         orders = await prisma.order.findMany({
+          where: { status: { not: "DELETED" } },
           orderBy: { createdAt: "desc" },
           include: {
             gift: true,
