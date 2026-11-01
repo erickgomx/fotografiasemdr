@@ -81,7 +81,9 @@ export async function POST(request: Request) {
         ? Number(Number(customAmount).toFixed(2))
         : gift.price;
 
-    const minRequired = gift.category === "aberto" ? Math.max(197, gift.price) : 197;
+    // Prevenção contra Price Tampering:
+    // Categoria 'aberto' aceita a partir de R$ 197. Presentes regulares exigem pelo menos o valor oficial de catálogo.
+    const minRequired = gift.category === "aberto" ? 197 : Math.max(197, gift.price);
     if (baseAmount < minRequired) {
       return NextResponse.json(
         {

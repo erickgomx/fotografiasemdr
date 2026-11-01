@@ -24,6 +24,8 @@ export async function POST(req: Request) {
     }
 
     if (password.trim() !== configuredPassword) {
+      // Atraso artificial de 600ms para mitigar ataques automatizados de força bruta
+      await new Promise((resolve) => setTimeout(resolve, 600));
       return NextResponse.json(
         { success: false, error: "Senha incorreta. Tente novamente." },
         { status: 401 }

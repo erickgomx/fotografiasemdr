@@ -13,8 +13,15 @@ export function generateAuthToken(): string {
 
 export function verifyAuthToken(token?: string | null): boolean {
   if (!token) return false;
-  const expected = generateAuthToken();
-  return token === expected;
+  try {
+    const expected = generateAuthToken();
+    const tokenBuf = Buffer.from(token, "utf-8");
+    const expectedBuf = Buffer.from(expected, "utf-8");
+    if (tokenBuf.length !== expectedBuf.length) return false;
+    return crypto.timingSafeEqual(tokenBuf, expectedBuf);
+  } catch {
+    return false;
+  }
 }
 
 export function isAuthenticated(): boolean {
