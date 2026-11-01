@@ -26,7 +26,7 @@ export function GiftCard({ gift, onSelect }: GiftCardProps) {
   const getCategoryLabel = (cat: string) => {
     switch (cat) {
       case "aberto":
-        return "Cota Master";
+        return "Presente Especial";
       case "sobrevivencia":
         return "Ilha de Edição";
       case "festa":
@@ -34,7 +34,7 @@ export function GiftCard({ gift, onSelect }: GiftCardProps) {
       case "lua-de-mel":
         return "Lua de Mel";
       default:
-        return "Cota dos Noivos";
+        return "Presente dos Noivos";
     }
   };
 
@@ -130,7 +130,7 @@ export function GiftCard({ gift, onSelect }: GiftCardProps) {
           <div className="mt-6 pt-4 border-t border-white/10 space-y-3">
             <div className="flex items-center justify-between text-xs">
               <span className="font-semibold uppercase tracking-wider text-amber-300/80 text-[10px] flex items-center gap-1">
-                <Sparkles className="w-3 h-3 text-amber-400" /> Escolha sua Cota:
+                <Sparkles className="w-3 h-3 text-amber-400" /> Escolha o Valor:
               </span>
               <span className="text-[11px] text-stone-400">
                 A partir de R$ 197
@@ -158,7 +158,7 @@ export function GiftCard({ gift, onSelect }: GiftCardProps) {
           <div className="mt-6 pt-4 border-t border-stone-100 flex items-center justify-between gap-3">
             <div>
               <span className="text-[10px] uppercase font-semibold text-stone-400 tracking-wider block">
-                Valor da Cota
+                Valor do Presente
               </span>
               <span className="text-lg sm:text-xl font-bold text-stone-900 tracking-tight">
                 {formattedPrice}

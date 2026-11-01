@@ -22,6 +22,7 @@ export async function GET(request: Request) {
           OR: [
             { price: { lt: 197 } },
             { title: "Produtor Executivo: Você Define o Orçamento da Produção!" },
+            { title: "Cota pro Noivo Não Pedir Microfone Lapela no Altar" },
           ],
         },
       });

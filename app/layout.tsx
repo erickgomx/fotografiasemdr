@@ -15,10 +15,10 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: "Erick & Itally | Lista de Presentes & Cotas Cinematográficas",
+  title: "Erick & Itally | Lista de Presentes Cinematográficos",
   description:
-    "Apoie o casamento de Erick & Itally com cotas audiovisuais, sobrevivência à ilha de edição, festa, open bar e lua de mel!",
-  keywords: ["casamento", "lista de presentes", "cotas de casamento", "audiovisual", "filmmaker", "pix", "mercado pago"],
+    "Apoie o casamento de Erick & Itally com presentes audiovisuais, sobrevivência à ilha de edição, festa e lua de mel!",
+  keywords: ["casamento", "lista de presentes", "presentes de casamento", "audiovisual", "filmmaker", "pix", "mercado pago"],
   icons: {
     icon: "/icon.svg",
     apple: "/icon.svg",

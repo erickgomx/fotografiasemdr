@@ -407,7 +407,7 @@ export function CheckoutModal({ gift, initialAmount, onClose, onSuccess, onGoToM
           {/* ETAPA 1: FORMULÁRIO DO CONVIDADO */}
           {step === "form" && (
             <form onSubmit={handleSubmitForm} className="p-5 sm:p-6 space-y-4">
-              {/* Valor da Cota ou Valor Livre */}
+              {/* Valor do Presente ou Valor Livre */}
               {gift.category === "aberto" || isEditingAmount ? (
                 <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200 text-left space-y-2.5">
                   <div className="flex items-center justify-between">
@@ -469,7 +469,7 @@ export function CheckoutModal({ gift, initialAmount, onClose, onSuccess, onGoToM
               ) : (
                 <div className="flex items-center justify-between p-3 rounded-2xl bg-stone-50 border border-stone-200/80">
                   <span className="text-xs text-stone-600">
-                    Valor da cota: <strong className="text-stone-900 font-bold">{formatBRL(amount)}</strong>
+                    Valor do presente: <strong className="text-stone-900 font-bold">{formatBRL(amount)}</strong>
                   </span>
                   <button
                     type="button"

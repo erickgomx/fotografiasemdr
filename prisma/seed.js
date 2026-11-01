@@ -3,10 +3,10 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 const GIFTS = [
-  // --- COTA ESPECIAL: VALOR ABERTO ---
+  // --- PRESENTE ESPECIAL: VALOR ABERTO ---
   {
     title: "Produtor Executivo: Você Financia o Filme da Nossa Vida!",
-    description: "Quer ser aquele padrinho ou amigo lendário que assina os créditos principais nos agradecimentos? Escolha sua cota de investimento e tenha seu nome eternizado no topo do mural oficial dos maiores incentivadores dessa história de amor.",
+    description: "Quer ser aquele padrinho ou amigo lendário que assina os créditos principais nos agradecimentos? Escolha sua contribuição de investimento e tenha seu nome eternizado no topo do mural oficial dos maiores incentivadores dessa história de amor.",
     imageUrl: "https://images.unsplash.com/photo-1518676590629-3dcbd9c5a5c9?auto=format&fit=crop&w=800&q=80",
     price: 197.0,
     category: "aberto",
@@ -79,7 +79,7 @@ const GIFTS = [
     category: "festa",
   },
   {
-    title: "Cota pro Noivo Não Pedir Microfone Lapela no Altar",
+    title: "Presente pro Noivo Não Pedir Microfone Lapela no Altar",
     description: "Contribuição indispensável para impedir que o Erick interrompa o celebrante durante os votos sagrados dizendo que o microfone 'tá clipando em 0dB e captando muito eco da catedral'.",
     imageUrl: "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&w=800&q=80",
     price: 225.0,
@@ -166,7 +166,7 @@ const GIFTS = [
   },
   {
     title: "Drone Subaquático 4K para Filmar Corais na Lua de Mel",
-    description: "Cota dos sonhos dos cineastas! Capturar takes submersos deslumbrantes sem o noivo precisar mergulhar sem ar com uma GoPro amarrada na cabeça.",
+    description: "O sonho de consumo dos cineastas! Capturar takes submersos deslumbrantes sem o noivo precisar mergulhar sem ar com uma GoPro amarrada na cabeça.",
     imageUrl: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=800&q=80",
     price: 940.0,
     category: "lua-de-mel",
@@ -179,7 +179,7 @@ const GIFTS = [
     category: "lua-de-mel",
   },
   {
-    title: "Lente Anamórfica Cine Prime dos Sonhos (Cota Master)",
+    title: "Lente Anamórfica Cine Prime dos Sonhos (Edição Master)",
     description: "O ápice do luxo cinematográfico! Flares azuis horizontais e bokeh oval característico para transformar os vídeos da vida a dois e futuros filhos em verdadeiras obras de arte.",
     imageUrl: "https://images.unsplash.com/photo-1617788138017-80ad40651399?auto=format&fit=crop&w=800&q=80",
     price: 1500.0,

@@ -96,7 +96,7 @@ export default function HomePage() {
             >
               <div className="text-center max-w-xl mx-auto mb-10">
                 <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest block mb-2">
-                  Escolha Sua Cota
+                  Escolha Seu Presente
                 </span>
                 <h2 className="font-serif text-2xl sm:text-3xl font-bold text-stone-900">
                   Catálogo de Presentes

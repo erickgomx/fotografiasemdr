@@ -39,7 +39,7 @@ export function Hero({ onScrollToGifts, onOpenMessages }: HeroProps) {
           <span className="font-medium text-stone-800">
             café pras madrugadas de render, tolerância a palestras de 24fps e amor à prova de falhas no set
           </span>
-          . Escolha sua cota, assine nossos créditos como Produtor e deixe seu recado gravado no mural!
+          . Escolha seu presente, assine nossos créditos como Produtor e deixe seu recado gravado no mural!
         </p>
 
         {/* Botões de Ação Dinâmicos */}
@@ -49,7 +49,7 @@ export function Hero({ onScrollToGifts, onOpenMessages }: HeroProps) {
             className="group w-full sm:w-auto px-8 py-3.5 rounded-full bg-stone-900 hover:bg-stone-800 text-white font-medium text-xs sm:text-sm tracking-wide transition-all duration-200 shadow-sm hover:shadow-md active:scale-95 flex items-center justify-center gap-2"
           >
             <Film className="w-4 h-4 text-stone-300 group-hover:rotate-12 transition-transform duration-300" />
-            <span>Escolher uma Cota</span>
+            <span>Escolher um Presente</span>
           </button>
 
           <button
