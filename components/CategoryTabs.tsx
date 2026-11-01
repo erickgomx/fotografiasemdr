@@ -72,9 +72,9 @@ export function CategoryTabs({
             onChange={(e) => onSortChange(e.target.value)}
             className="w-full sm:w-auto px-3.5 py-2.5 rounded-xl bg-white border border-stone-200 text-xs sm:text-sm text-stone-700 font-medium focus:outline-none focus:border-stone-900 transition-all shadow-xs"
           >
+            <option value="title-asc">Ordem alfabética (A-Z)</option>
             <option value="price-asc">Menor valor</option>
             <option value="price-desc">Maior valor</option>
-            <option value="title-asc">Ordem alfabética (A-Z)</option>
           </select>
         </div>
       </div>

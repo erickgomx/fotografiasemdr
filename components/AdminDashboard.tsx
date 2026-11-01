@@ -332,8 +332,8 @@ export function AdminDashboard() {
       return;
     }
     const numPrice = parseFloat(formPrice.replace(",", "."));
-    if (isNaN(numPrice) || numPrice < 1) {
-      setGiftFormError("O valor deve ser de no mínimo R$ 1,00.");
+    if (isNaN(numPrice) || numPrice < 197) {
+      setGiftFormError("O valor deve ser de no mínimo R$ 197,00.");
       return;
     }
     if (!formImageUrl.trim()) {
@@ -1130,8 +1130,8 @@ export function AdminDashboard() {
                   </div>
                   <span className="text-[10px] text-stone-400 mt-1 block">
                     {formCategory === "aberto"
-                      ? "Os convidados não poderão doar menos do que este valor no presente de Valor Livre (mínimo R$ 100,00)."
-                      : "Valor configurado para este presente."}
+                      ? "Os convidados não poderão doar menos do que este valor no presente de Valor Livre (mínimo R$ 197,00)."
+                      : "Valor configurado para este presente (mínimo R$ 197,00)."}
                   </span>
                 </div>
 

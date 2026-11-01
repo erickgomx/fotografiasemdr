@@ -17,7 +17,7 @@ export interface GiftItem {
 
 interface GiftCardProps {
   gift: GiftItem;
-  onSelect: (gift: GiftItem) => void;
+  onSelect: (gift: GiftItem, customAmount?: number) => void;
 }
 
 export function GiftCard({ gift, onSelect }: GiftCardProps) {
@@ -81,24 +81,51 @@ export function GiftCard({ gift, onSelect }: GiftCardProps) {
           </p>
         </div>
 
-        {/* Rodapé do Card: Preço e Botão Minimalistas */}
-        <div className="mt-6 pt-4 border-t border-stone-100 flex items-center justify-between gap-3">
-          <div>
-            <span className="text-[10px] uppercase font-medium text-stone-400 tracking-wider block">
-              {gift.category === "aberto" ? "Contribuição Mínima" : "Valor"}
-            </span>
-            <span className="text-lg sm:text-xl font-bold text-stone-900 tracking-tight">
-              {gift.category === "aberto" ? `A partir de ${formattedPrice}` : formattedPrice}
-            </span>
-          </div>
+        {/* Rodapé do Card */}
+        {gift.category === "aberto" ? (
+          <div className="mt-6 pt-4 border-t border-stone-100 space-y-2.5">
+            <div className="flex items-center justify-between text-stone-500 text-[11px]">
+              <span className="font-semibold uppercase tracking-wider text-stone-400 text-[10px]">
+                Escolha a Cota:
+              </span>
+              <span className="font-medium text-stone-600">
+                Mínimo R$ 197
+              </span>
+            </div>
 
-          <button
-            onClick={() => onSelect(gift)}
-            className="px-4 py-2 rounded-full font-medium text-xs sm:text-sm bg-stone-900 hover:bg-stone-800 text-white transition-all shrink-0 shadow-xs"
-          >
-            {gift.category === "aberto" ? "Contribuir" : "Presentear"}
-          </button>
-        </div>
+            {/* 4 botões repartidos em 4 (grid 2x2) */}
+            <div className="grid grid-cols-2 gap-2">
+              {[197, 200, 300, 400].map((val) => (
+                <button
+                  key={val}
+                  type="button"
+                  onClick={() => onSelect(gift, val)}
+                  className="py-2.5 px-3 rounded-xl bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs sm:text-sm transition-all shadow-xs flex items-center justify-center gap-1 active:scale-95"
+                >
+                  <span>R$ {val}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="mt-6 pt-4 border-t border-stone-100 flex items-center justify-between gap-3">
+            <div>
+              <span className="text-[10px] uppercase font-medium text-stone-400 tracking-wider block">
+                Valor
+              </span>
+              <span className="text-lg sm:text-xl font-bold text-stone-900 tracking-tight">
+                {formattedPrice}
+              </span>
+            </div>
+
+            <button
+              onClick={() => onSelect(gift)}
+              className="px-4 py-2 rounded-full font-medium text-xs sm:text-sm bg-stone-900 hover:bg-stone-800 text-white transition-all shrink-0 shadow-xs"
+            >
+              Presentear
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

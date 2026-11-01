@@ -23,6 +23,7 @@ import { calculateCheckoutAmount } from "@/lib/fees";
 
 interface CheckoutModalProps {
   gift: GiftItem | null;
+  initialAmount?: number;
   onClose: () => void;
   onSuccess: () => void;
   onGoToMessages: () => void;
@@ -55,7 +56,7 @@ function detectCardBrand(num: string): string {
   return "visa";
 }
 
-export function CheckoutModal({ gift, onClose, onSuccess, onGoToMessages }: CheckoutModalProps) {
+export function CheckoutModal({ gift, initialAmount, onClose, onSuccess, onGoToMessages }: CheckoutModalProps) {
   // Etapa atual
   const [step, setStep] = useState<"form" | "pix" | "success">("form");
   const [loading, setLoading] = useState(false);
@@ -65,17 +66,17 @@ export function CheckoutModal({ gift, onClose, onSuccess, onGoToMessages }: Chec
   const [mpPublicKey, setMpPublicKey] = useState<string>("");
 
   // Dados do formulário
-  const minRequiredAmount = gift ? (gift.category === "aberto" ? Math.max(100, gift.price) : 100) : 100;
-  const [amount, setAmount] = useState<number>(gift?.price || 100);
+  const minRequiredAmount = gift ? (gift.category === "aberto" ? Math.max(197, gift.price) : 197) : 197;
+  const [amount, setAmount] = useState<number>(initialAmount || gift?.price || 197);
   const [isEditingAmount, setIsEditingAmount] = useState<boolean>(gift?.category === "aberto");
 
   useEffect(() => {
     if (gift) {
-      const initialVal = gift.category === "aberto" ? Math.max(100, gift.price) : Math.max(100, gift.price);
-      setAmount(initialVal);
+      const startingVal = initialAmount || (gift.category === "aberto" ? Math.max(197, gift.price) : Math.max(197, gift.price));
+      setAmount(startingVal);
       setIsEditingAmount(gift.category === "aberto");
     }
-  }, [gift]);
+  }, [gift, initialAmount]);
 
   // Busca a chave pública do Mercado Pago
   useEffect(() => {
@@ -449,10 +450,7 @@ export function CheckoutModal({ gift, onClose, onSuccess, onGoToMessages }: Chec
 
                   <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
                     <span className="text-[10px] text-stone-400 font-medium">Sugestões:</span>
-                    {(minRequiredAmount <= 100
-                      ? [100, 150, 200, 300, 500, 1000]
-                      : [minRequiredAmount, Math.round(minRequiredAmount * 1.5), minRequiredAmount * 2, minRequiredAmount * 3, minRequiredAmount * 5]
-                    ).map((preset) => (
+                    {[197, 200, 300, 400, 500, 1000].map((preset) => (
                       <button
                         key={preset}
                         type="button"

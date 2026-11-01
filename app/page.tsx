@@ -19,10 +19,11 @@ export default function HomePage() {
   // Filtros e ordenação
   const [selectedCategory, setSelectedCategory] = useState("todas");
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortBy, setSortBy] = useState("price-asc");
+  const [sortBy, setSortBy] = useState("title-asc");
 
   // Presente selecionado para checkout
   const [selectedGift, setSelectedGift] = useState<GiftItem | null>(null);
+  const [initialCustomAmount, setInitialCustomAmount] = useState<number | undefined>(undefined);
 
   // Carrega a lista de presentes pública
   const loadGifts = async () => {
@@ -147,7 +148,10 @@ export default function HomePage() {
                     <GiftCard
                       key={gift.id}
                       gift={gift}
-                      onSelect={(item) => setSelectedGift(item)}
+                      onSelect={(item, val) => {
+                        setSelectedGift(item);
+                        setInitialCustomAmount(val);
+                      }}
                     />
                   ))}
                 </div>
@@ -167,7 +171,11 @@ export default function HomePage() {
       {selectedGift && (
         <CheckoutModal
           gift={selectedGift}
-          onClose={() => setSelectedGift(null)}
+          initialAmount={initialCustomAmount}
+          onClose={() => {
+            setSelectedGift(null);
+            setInitialCustomAmount(undefined);
+          }}
           onSuccess={() => {
             loadGifts();
           }}

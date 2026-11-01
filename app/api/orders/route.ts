@@ -46,7 +46,7 @@ export async function POST(request: Request) {
         ? Number(Number(customAmount).toFixed(2))
         : gift.price;
 
-    const minRequired = gift.category === "aberto" ? Math.max(100, gift.price) : 100;
+    const minRequired = gift.category === "aberto" ? Math.max(197, gift.price) : 197;
     if (baseAmount < minRequired) {
       return NextResponse.json(
         {

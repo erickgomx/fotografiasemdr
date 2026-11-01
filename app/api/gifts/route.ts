@@ -9,11 +9,29 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const category = searchParams.get("category");
 
-    // Auto-seed apenas se o banco estiver completamente vazio
+    // Auto-seed se o banco estiver vazio
     const count = await prisma.gift.count();
     if (count === 0) {
       for (const item of INITIAL_GIFTS) {
         await prisma.gift.create({ data: item });
+      }
+    } else {
+      // Se houver algum presente com preço antigo inferior a 197, atualiza para os novos valores oficiais
+      const hasOldPrices = await prisma.gift.findFirst({
+        where: { price: { lt: 197 } },
+      });
+      if (hasOldPrices) {
+        for (const item of INITIAL_GIFTS) {
+          await prisma.gift.updateMany({
+            where: { title: item.title },
+            data: {
+              price: item.price,
+              description: item.description,
+              imageUrl: item.imageUrl,
+              category: item.category,
+            },
+          });
+        }
       }
     }
 

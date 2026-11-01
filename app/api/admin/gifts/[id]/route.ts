@@ -25,7 +25,7 @@ export async function PATCH(
     if (title !== undefined) dataToUpdate.title = title.trim();
     if (description !== undefined) dataToUpdate.description = description.trim();
     if (imageUrl !== undefined) dataToUpdate.imageUrl = imageUrl.trim();
-    if (price !== undefined) dataToUpdate.price = Math.max(1, Number(price));
+    if (price !== undefined) dataToUpdate.price = Math.max(197, Number(price));
     if (category !== undefined) dataToUpdate.category = category.trim();
     if (active !== undefined) dataToUpdate.active = Boolean(active);
 
