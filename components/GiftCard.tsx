@@ -18,9 +18,10 @@ export interface GiftItem {
 interface GiftCardProps {
   gift: GiftItem;
   onSelect: (gift: GiftItem, customAmount?: number) => void;
+  className?: string;
 }
 
-export function GiftCard({ gift, onSelect }: GiftCardProps) {
+export function GiftCard({ gift, onSelect, className }: GiftCardProps) {
   const isSpecial = gift.category === "aberto";
 
   const getCategoryLabel = (cat: string) => {
@@ -49,7 +50,7 @@ export function GiftCard({ gift, onSelect }: GiftCardProps) {
         isSpecial
           ? "bg-gradient-to-b from-stone-900 to-stone-950 text-white border-2 border-amber-400/50 shadow-lg shadow-amber-950/20 ring-1 ring-amber-400/30"
           : "bg-white border border-stone-200/80 shadow-xs hover:shadow-md hover:border-stone-300 text-stone-900"
-      }`}
+      } ${className || ""}`}
     >
       {/* Moldura da Imagem Cinematográfica 16:9 */}
       <div className="relative w-full aspect-[16/10] sm:aspect-[16/9] overflow-hidden bg-stone-950">

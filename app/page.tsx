@@ -44,10 +44,23 @@ export default function HomePage() {
     loadGifts();
   }, []);
 
-  // Filtragem e ordenação dos presentes
+  // Filtragem e posicionamento estratégico dos presentes
   const filteredGifts = useMemo(() => {
-    return gifts
+    // 1. Identifica o presente de valor personalizado/aberto
+    const specialGift = gifts.find(
+      (gift) =>
+        gift.category === "aberto" &&
+        (gift.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          gift.description.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
+
+    const isSpecialCategorySelected = selectedCategory === "aberto";
+    const isAllCategories = selectedCategory === "todas";
+
+    // 2. Filtra os outros presentes
+    const regularGifts = gifts
       .filter((gift) => {
+        if (gift.category === "aberto") return false;
         const matchesCategory =
           selectedCategory === "todas" ? true : gift.category === selectedCategory;
         const matchesSearch =
@@ -61,6 +74,38 @@ export default function HomePage() {
         if (sortBy === "title-asc") return a.title.localeCompare(b.title);
         return 0;
       });
+
+    // Se o usuário filtrou especificamente pela categoria "Valor Livre"
+    if (isSpecialCategorySelected) {
+      return specialGift ? [specialGift] : [];
+    }
+
+    // Se o card especial não deve ser exibido (busca não combinou ou categoria específica selecionada como festa/lua de mel)
+    if (!specialGift || (!isAllCategories && selectedCategory !== "aberto")) {
+      return regularGifts;
+    }
+
+    // Se não há outros presentes nos resultados
+    if (regularGifts.length === 0) {
+      return [specialGift];
+    }
+
+    // Posiciona o card de valor personalizado NO MEIO DOS DEMAIS
+    // e garante que ele caia na COLUNA CENTRAL (index % 3 === 1) em telas grandes
+    const half = Math.floor(regularGifts.length / 2);
+    let targetIndex = half;
+
+    if (targetIndex % 3 === 0) {
+      targetIndex = Math.min(regularGifts.length, targetIndex + 1);
+    } else if (targetIndex % 3 === 2) {
+      targetIndex = Math.max(0, targetIndex - 1);
+    }
+
+    return [
+      ...regularGifts.slice(0, targetIndex),
+      specialGift,
+      ...regularGifts.slice(targetIndex),
+    ];
   }, [gifts, selectedCategory, searchQuery, sortBy]);
 
   const scrollToGifts = () => {
@@ -144,16 +189,29 @@ export default function HomePage() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-                  {filteredGifts.map((gift) => (
-                    <GiftCard
-                      key={gift.id}
-                      gift={gift}
-                      onSelect={(item, val) => {
-                        setSelectedGift(item);
-                        setInitialCustomAmount(val);
-                      }}
-                    />
-                  ))}
+                  {filteredGifts.map((gift) => {
+                    const isSingleSpecial =
+                      filteredGifts.length === 1 && gift.category === "aberto";
+
+                    return (
+                      <div
+                        key={gift.id}
+                        className={
+                          isSingleSpecial
+                            ? "sm:col-span-2 lg:col-span-1 lg:col-start-2 w-full max-w-md mx-auto lg:max-w-none"
+                            : "w-full"
+                        }
+                      >
+                        <GiftCard
+                          gift={gift}
+                          onSelect={(item, val) => {
+                            setSelectedGift(item);
+                            setInitialCustomAmount(val);
+                          }}
+                        />
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </section>
