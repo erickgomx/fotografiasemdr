@@ -33,6 +33,8 @@ export interface CreatePaymentInput {
   payerEmail: string;
   payerCpf: string;
   paymentMethod: "PIX" | "CREDIT_CARD";
+  payerMessage?: string | null;
+  isAnonymous?: boolean;
   installments?: number;
   cardToken?: string;
   paymentMethodId?: string;
@@ -156,6 +158,8 @@ export async function createPayment(input: CreatePaymentInput): Promise<PaymentR
         app: "fotografiasemdr",
         wedding: "erick_itally",
         order_id: input.orderId,
+        payer_message: input.payerMessage || "",
+        is_anonymous: Boolean(input.isAnonymous),
       },
     };
 
@@ -205,6 +209,8 @@ export async function createPayment(input: CreatePaymentInput): Promise<PaymentR
         app: "fotografiasemdr",
         wedding: "erick_itally",
         order_id: input.orderId,
+        payer_message: input.payerMessage || "",
+        is_anonymous: Boolean(input.isAnonymous),
       },
     };
 

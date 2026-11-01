@@ -24,10 +24,10 @@ export function Guestbook({ onBackToGifts }: GuestbookProps) {
   const [messages, setMessages] = useState<GuestMessageItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchMessages = async () => {
+  const fetchMessages = async (force = false) => {
     setLoading(true);
     try {
-      const res = await fetch("/api/messages");
+      const res = await fetch(`/api/messages${force ? "?refresh=true" : ""}`);
       const json = await res.json();
       if (json.success) {
         setMessages(json.data);
@@ -40,7 +40,7 @@ export function Guestbook({ onBackToGifts }: GuestbookProps) {
   };
 
   useEffect(() => {
-    fetchMessages();
+    fetchMessages(false);
   }, []);
 
   return (
@@ -59,7 +59,7 @@ export function Guestbook({ onBackToGifts }: GuestbookProps) {
 
         <div className="mt-4 flex items-center justify-center">
           <button
-            onClick={fetchMessages}
+            onClick={() => fetchMessages(true)}
             disabled={loading}
             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium text-stone-600 bg-white border border-stone-200 hover:bg-stone-50 transition-colors shadow-xs"
           >

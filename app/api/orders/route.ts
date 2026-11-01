@@ -92,6 +92,8 @@ export async function POST(request: Request) {
       payerName: order.payerName,
       payerEmail: order.payerEmail,
       payerCpf: order.payerCpf,
+      payerMessage: order.payerMessage,
+      isAnonymous: order.isAnonymous,
       paymentMethod: order.paymentMethod as "PIX" | "CREDIT_CARD",
       installments: order.installments,
       cardToken,
