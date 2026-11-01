@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { INITIAL_GIFTS } from "@/lib/seedData";
 import { isAuthenticated } from "@/lib/auth";
+import { isGiftExcluded } from "@/lib/exclusions";
 
 export async function POST() {
   if (!isAuthenticated()) {
@@ -13,15 +14,21 @@ export async function POST() {
 
   try {
     for (const item of INITIAL_GIFTS) {
+      if (isGiftExcluded(item.title)) continue;
+
       const exists = await prisma.gift.findFirst({
-        where: { title: item.title },
+        where: {
+          OR: [{ imageUrl: item.imageUrl }, { title: item.title }],
+        },
       });
+
       if (!exists) {
         await prisma.gift.create({ data: item });
       } else {
         await prisma.gift.update({
           where: { id: exists.id },
           data: {
+            title: item.title,
             imageUrl: item.imageUrl,
             description: item.description,
             price: item.price,
@@ -37,7 +44,7 @@ export async function POST() {
 
     return NextResponse.json({
       success: true,
-      message: "Catálogo de presentes atualizado com fotos cinematográficas!",
+      message: "Catálogo de presentes atualizado!",
       count: gifts.length,
     });
   } catch (error: any) {

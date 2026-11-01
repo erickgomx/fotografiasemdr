@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { INITIAL_GIFTS } from "@/lib/seedData";
+import { isGiftExcluded } from "@/lib/exclusions";
 
 export const dynamic = "force-dynamic";
 
@@ -9,14 +10,16 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const category = searchParams.get("category");
 
-    // Auto-seed se o banco estiver vazio
+    // Auto-seed apenas se o banco estiver completamente vazio (primeira inicialização)
     const count = await prisma.gift.count();
     if (count === 0) {
       for (const item of INITIAL_GIFTS) {
-        await prisma.gift.create({ data: item });
+        if (!isGiftExcluded(item.title)) {
+          await prisma.gift.create({ data: item });
+        }
       }
     } else {
-      // Sincroniza se ainda estiver com os dados ou textos anteriores
+      // Se houver algum registro que precisa de atualização textual ou de preço
       const needsSync = await prisma.gift.findFirst({
         where: {
           OR: [
@@ -28,11 +31,15 @@ export async function GET(request: Request) {
       });
       if (needsSync) {
         for (const item of INITIAL_GIFTS) {
+          if (isGiftExcluded(item.title)) continue;
+
           const existing = await prisma.gift.findFirst({
             where: {
               OR: [{ imageUrl: item.imageUrl }, { title: item.title }],
             },
           });
+
+          // Atualiza apenas os que já existem no banco; NUNCA recria presentes deletados
           if (existing) {
             await prisma.gift.update({
               where: { id: existing.id },
@@ -44,8 +51,6 @@ export async function GET(request: Request) {
                 category: item.category,
               },
             });
-          } else {
-            await prisma.gift.create({ data: item });
           }
         }
       }
@@ -77,10 +82,10 @@ export async function GET(request: Request) {
       success: true,
       data: gifts,
     });
-  } catch (error) {
-    console.error("[API /api/gifts] Erro:", error);
+  } catch (error: any) {
+    console.error("[API GET /api/gifts] Erro:", error);
     return NextResponse.json(
-      { success: false, error: "Erro ao buscar presentes" },
+      { success: false, error: "Erro ao buscar catálogo de presentes." },
       { status: 500 }
     );
   }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { isAuthenticated } from "@/lib/auth";
+import { addExcludedGift } from "@/lib/exclusions";
 
 export const dynamic = "force-dynamic";
 
@@ -62,23 +63,39 @@ export async function DELETE(
   const { id } = params;
 
   try {
-    // Verifica se possui pedidos associados
-    const ordersCount = await prisma.order.count({
-      where: { giftId: id },
+    const gift = await prisma.gift.findUnique({
+      where: { id },
     });
 
-    if (ordersCount > 0) {
-      // Se tem pedidos, desativa para não quebrar integridade referencial
-      await prisma.gift.update({
-        where: { id },
-        data: { active: false },
-      });
+    if (!gift) {
       return NextResponse.json({
         success: true,
-        message: "O presente possui pedidos vinculados e foi desativado do catálogo público.",
+        message: "Presente já foi removido.",
       });
     }
 
+    // Marca o presente na lista permanente de exclusões para nunca ser re-criado por auto-seeds
+    addExcludedGift(gift.title);
+
+    // Se houver pedidos associados, remove em cascata para garantir que o presente seja realmente deletado
+    const orders = await prisma.order.findMany({
+      where: { giftId: id },
+      select: { id: true },
+    });
+
+    if (orders.length > 0) {
+      const orderIds = orders.map((o) => o.id);
+
+      await prisma.guestMessage.deleteMany({
+        where: { orderId: { in: orderIds } },
+      });
+
+      await prisma.order.deleteMany({
+        where: { id: { in: orderIds } },
+      });
+    }
+
+    // Exclui o presente definitivamente
     await prisma.gift.delete({
       where: { id },
     });
