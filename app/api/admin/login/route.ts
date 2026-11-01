@@ -13,12 +13,17 @@ export async function POST(req: Request) {
       );
     }
 
-    const isValid =
-      password.trim() === ADMIN_PASSWORD.trim() ||
-      password.trim() === "casamento2027" ||
-      password.trim() === "casamento2026";
+    const configuredPassword = ADMIN_PASSWORD ? ADMIN_PASSWORD.trim() : "";
 
-    if (!isValid) {
+    if (!configuredPassword) {
+      console.error("[Login API] Variável de ambiente ADMIN_PASSWORD não configurada no servidor.");
+      return NextResponse.json(
+        { success: false, error: "Senha de administração não configurada no servidor." },
+        { status: 500 }
+      );
+    }
+
+    if (password.trim() !== configuredPassword) {
       return NextResponse.json(
         { success: false, error: "Senha incorreta. Tente novamente." },
         { status: 401 }

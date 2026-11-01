@@ -1,13 +1,13 @@
 import crypto from "crypto";
 import { cookies } from "next/headers";
 
-const SECRET = process.env.AUTH_SECRET || "erick-itally-wedding-secret-key-2027";
-export const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "casamento2027";
+const SECRET = process.env.AUTH_SECRET || "erick-itally-wedding-secret-token";
+export const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
 export const AUTH_COOKIE_NAME = "ei_admin_token";
 
 export function generateAuthToken(): string {
   const hmac = crypto.createHmac("sha256", SECRET);
-  hmac.update(ADMIN_PASSWORD);
+  hmac.update(ADMIN_PASSWORD || SECRET);
   return hmac.digest("hex");
 }
 
