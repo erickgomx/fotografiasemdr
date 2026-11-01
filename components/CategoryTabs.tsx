@@ -40,7 +40,7 @@ export function CategoryTabs({
             <button
               key={cat.id}
               onClick={() => onSelectCategory(cat.id)}
-              className={`px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition-all shrink-0 ${
+              className={`px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition-all shrink-0 active:scale-95 cursor-pointer ${
                 isSelected
                   ? "bg-stone-900 text-white shadow-xs"
                   : "bg-white text-stone-600 border border-stone-200/80 hover:bg-stone-50 hover:text-stone-900"

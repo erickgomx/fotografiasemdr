@@ -1,6 +1,6 @@
 "use client";
 
-import { Heart } from "lucide-react";
+import { Heart, Sparkles, Film, ArrowRight } from "lucide-react";
 
 export interface GiftItem {
   id: string;
@@ -21,10 +21,12 @@ interface GiftCardProps {
 }
 
 export function GiftCard({ gift, onSelect }: GiftCardProps) {
+  const isSpecial = gift.category === "aberto";
+
   const getCategoryLabel = (cat: string) => {
     switch (cat) {
       case "aberto":
-        return "Valor Livre";
+        return "Cota Master";
       case "sobrevivencia":
         return "Ilha de Edição";
       case "festa":
@@ -42,76 +44,121 @@ export function GiftCard({ gift, onSelect }: GiftCardProps) {
   }).format(gift.price);
 
   return (
-    <div className="group flex flex-col bg-white rounded-2xl overflow-hidden border border-stone-200/70 shadow-xs hover:shadow-md hover:border-stone-300 transition-all duration-300">
-      {/* Imagem Limpa sem Sobrecarga */}
-      <div className="relative w-full h-48 sm:h-52 overflow-hidden bg-stone-100">
+    <div
+      className={`group flex flex-col rounded-2xl overflow-hidden transition-all duration-300 ${
+        isSpecial
+          ? "bg-gradient-to-b from-stone-900 to-stone-950 text-white border-2 border-amber-400/50 shadow-lg shadow-amber-950/20 ring-1 ring-amber-400/30"
+          : "bg-white border border-stone-200/80 shadow-xs hover:shadow-md hover:border-stone-300 text-stone-900"
+      }`}
+    >
+      {/* Moldura da Imagem Cinematográfica 16:9 */}
+      <div className="relative w-full aspect-[16/10] sm:aspect-[16/9] overflow-hidden bg-stone-950">
         <img
           src={gift.imageUrl}
           alt={gift.title}
-          className="w-full h-full object-cover group-hover:scale-103 transition-transform duration-500"
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
           loading="lazy"
         />
 
-        {/* Categoria Discreta */}
-        <div className="absolute top-3 left-3">
-          <span className="inline-block px-2.5 py-1 rounded-full text-[10px] font-medium tracking-wide uppercase bg-stone-900/80 text-white backdrop-blur-sm shadow-xs">
-            {getCategoryLabel(gift.category)}
+        {/* Vinheta cinematográfica (gradiente de luz e sombra de cinema) */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-black/35 pointer-events-none" />
+
+        {/* Categoria / Badge de Cinema */}
+        <div className="absolute top-3 left-3 z-10">
+          <span
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold tracking-wider uppercase backdrop-blur-md shadow-xs ${
+              isSpecial
+                ? "bg-amber-400 text-stone-950 font-bold"
+                : "bg-stone-900/80 text-white border border-white/10"
+            }`}
+          >
+            {isSpecial ? (
+              <>
+                <Sparkles className="w-2.5 h-2.5" />
+                <span>{getCategoryLabel(gift.category)}</span>
+              </>
+            ) : (
+              <span>{getCategoryLabel(gift.category)}</span>
+            )}
           </span>
         </div>
 
-        {/* Contagem de presentes discreta */}
+        {/* Contador de Presentes Afetivo */}
         {gift._count && gift._count.orders > 0 && (
-          <div className="absolute top-3 right-3">
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-medium bg-white/90 backdrop-blur-sm text-stone-700 shadow-xs">
-              <Heart className="w-2.5 h-2.5 text-stone-800 fill-stone-800" />
-              {gift._count.orders} {gift._count.orders > 1 ? "presentes" : "presente"}
+          <div className="absolute top-3 right-3 z-10">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-medium bg-white/95 backdrop-blur-md text-stone-800 shadow-xs">
+              <Heart className="w-2.5 h-2.5 text-rose-500 fill-rose-500" />
+              <span>
+                {gift._count.orders} {gift._count.orders > 1 ? "presentes" : "presente"}
+              </span>
             </span>
           </div>
         )}
+
+        {/* Marca d'água sutil de película */}
+        <div className="absolute bottom-2 right-3 pointer-events-none">
+          <span className="text-[9px] uppercase tracking-widest text-white/50 font-mono">
+            {isSpecial ? "PRODUCER // 2026" : "CINE // 24FPS"}
+          </span>
+        </div>
       </div>
 
-      {/* Conteúdo Editorial */}
+      {/* Conteúdo Textual com Storytelling Envolvente */}
       <div className="flex-1 p-5 sm:p-6 flex flex-col justify-between">
         <div>
-          <h3 className="font-serif text-lg font-bold text-stone-900 group-hover:text-stone-700 transition-colors leading-snug">
+          <h3
+            className={`font-serif text-lg font-bold leading-snug transition-colors ${
+              isSpecial
+                ? "text-amber-100 group-hover:text-amber-300"
+                : "text-stone-900 group-hover:text-stone-700"
+            }`}
+          >
             {gift.title}
           </h3>
-          <p className="mt-2 text-xs sm:text-sm text-stone-500 line-clamp-3 leading-relaxed font-light">
+
+          <p
+            className={`mt-2.5 text-xs sm:text-sm leading-relaxed font-light ${
+              isSpecial ? "text-stone-300" : "text-stone-600"
+            }`}
+          >
             {gift.description}
           </p>
         </div>
 
         {/* Rodapé do Card */}
-        {gift.category === "aberto" ? (
-          <div className="mt-6 pt-4 border-t border-stone-100 space-y-2.5">
-            <div className="flex items-center justify-between text-stone-500 text-[11px]">
-              <span className="font-semibold uppercase tracking-wider text-stone-400 text-[10px]">
-                Escolha a Cota:
+        {isSpecial ? (
+          <div className="mt-6 pt-4 border-t border-white/10 space-y-3">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-semibold uppercase tracking-wider text-amber-300/80 text-[10px] flex items-center gap-1">
+                <Sparkles className="w-3 h-3 text-amber-400" /> Escolha sua Cota:
               </span>
-              <span className="font-medium text-stone-600">
-                Mínimo R$ 197
+              <span className="text-[11px] text-stone-400">
+                A partir de R$ 197
               </span>
             </div>
 
-            {/* 4 botões repartidos em 4 (grid 2x2) */}
-            <div className="grid grid-cols-2 gap-2">
+            {/* Os 4 botões repartidos em 4 (quadrantes: 197, 200, 300, 400) */}
+            <div className="grid grid-cols-2 gap-2.5">
               {[197, 200, 300, 400].map((val) => (
                 <button
                   key={val}
                   type="button"
                   onClick={() => onSelect(gift, val)}
-                  className="py-2.5 px-3 rounded-xl bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs sm:text-sm transition-all shadow-xs flex items-center justify-center gap-1 active:scale-95"
+                  className="py-3 px-3 rounded-xl bg-gradient-to-r from-amber-400 to-amber-300 hover:from-amber-300 hover:to-amber-200 text-stone-950 font-extrabold text-sm transition-all duration-150 shadow-md shadow-amber-900/30 flex items-center justify-center gap-1 active:scale-95 cursor-pointer"
                 >
                   <span>R$ {val}</span>
                 </button>
               ))}
             </div>
+            <p className="text-[10px] text-center text-stone-400 font-light">
+              Clique no valor desejado para preencher sua dedicatória
+            </p>
           </div>
         ) : (
           <div className="mt-6 pt-4 border-t border-stone-100 flex items-center justify-between gap-3">
             <div>
-              <span className="text-[10px] uppercase font-medium text-stone-400 tracking-wider block">
-                Valor
+              <span className="text-[10px] uppercase font-semibold text-stone-400 tracking-wider block">
+                Valor da Cota
               </span>
               <span className="text-lg sm:text-xl font-bold text-stone-900 tracking-tight">
                 {formattedPrice}
@@ -120,9 +167,10 @@ export function GiftCard({ gift, onSelect }: GiftCardProps) {
 
             <button
               onClick={() => onSelect(gift)}
-              className="px-4 py-2 rounded-full font-medium text-xs sm:text-sm bg-stone-900 hover:bg-stone-800 text-white transition-all shrink-0 shadow-xs"
+              className="group/btn inline-flex items-center gap-1.5 px-4 sm:px-5 py-2.5 rounded-full font-medium text-xs sm:text-sm bg-stone-900 hover:bg-stone-800 text-white transition-all duration-200 shrink-0 shadow-xs hover:shadow-md active:scale-95 cursor-pointer"
             >
-              Presentear
+              <span>Presentear</span>
+              <ArrowRight className="w-3.5 h-3.5 text-stone-300 group-hover/btn:translate-x-0.5 transition-transform" />
             </button>
           </div>
         )}

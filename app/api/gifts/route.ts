@@ -16,21 +16,36 @@ export async function GET(request: Request) {
         await prisma.gift.create({ data: item });
       }
     } else {
-      // Se houver algum presente com preço antigo inferior a 197, atualiza para os novos valores oficiais
-      const hasOldPrices = await prisma.gift.findFirst({
-        where: { price: { lt: 197 } },
+      // Sincroniza se ainda estiver com os dados ou textos anteriores
+      const needsSync = await prisma.gift.findFirst({
+        where: {
+          OR: [
+            { price: { lt: 197 } },
+            { title: "Produtor Executivo: Você Define o Orçamento da Produção!" },
+          ],
+        },
       });
-      if (hasOldPrices) {
+      if (needsSync) {
         for (const item of INITIAL_GIFTS) {
-          await prisma.gift.updateMany({
-            where: { title: item.title },
-            data: {
-              price: item.price,
-              description: item.description,
-              imageUrl: item.imageUrl,
-              category: item.category,
+          const existing = await prisma.gift.findFirst({
+            where: {
+              OR: [{ imageUrl: item.imageUrl }, { title: item.title }],
             },
           });
+          if (existing) {
+            await prisma.gift.update({
+              where: { id: existing.id },
+              data: {
+                title: item.title,
+                price: item.price,
+                description: item.description,
+                imageUrl: item.imageUrl,
+                category: item.category,
+              },
+            });
+          } else {
+            await prisma.gift.create({ data: item });
+          }
         }
       }
     }
