@@ -46,14 +46,14 @@ export function GiftCard({ gift, onSelect, className }: GiftCardProps) {
 
   return (
     <div
-      className={`group flex flex-col rounded-2xl overflow-hidden transition-all duration-300 ${
+      className={`group flex flex-col h-full rounded-2xl overflow-hidden transition-all duration-300 ${
         isSpecial
-          ? "bg-gradient-to-b from-stone-900 to-stone-950 text-white border-2 border-amber-400/50 shadow-lg shadow-amber-950/20 ring-1 ring-amber-400/30"
+          ? "bg-gradient-to-b from-stone-900 to-stone-950 text-white border border-amber-400/50 shadow-md shadow-amber-950/20 ring-1 ring-amber-400/30"
           : "bg-white border border-stone-200/80 shadow-xs hover:shadow-md hover:border-stone-300 text-stone-900"
       } ${className || ""}`}
     >
       {/* Moldura da Imagem Cinematográfica 16:9 */}
-      <div className="relative w-full aspect-[16/10] sm:aspect-[16/9] overflow-hidden bg-stone-950">
+      <div className="relative w-full aspect-[16/10] sm:aspect-[16/9] overflow-hidden bg-stone-950 shrink-0">
         <img
           src={gift.imageUrl}
           alt={gift.title}
@@ -104,11 +104,11 @@ export function GiftCard({ gift, onSelect, className }: GiftCardProps) {
         </div>
       </div>
 
-      {/* Conteúdo Textual com Storytelling Envolvente */}
+      {/* Conteúdo Textual Padronizado */}
       <div className="flex-1 p-5 sm:p-6 flex flex-col justify-between">
         <div>
           <h3
-            className={`font-serif text-lg font-bold leading-snug transition-colors ${
+            className={`font-serif text-base sm:text-lg font-bold leading-snug line-clamp-2 min-h-[2.75rem] flex items-center transition-colors ${
               isSpecial
                 ? "text-amber-100 group-hover:text-amber-300"
                 : "text-stone-900 group-hover:text-stone-700"
@@ -118,7 +118,7 @@ export function GiftCard({ gift, onSelect, className }: GiftCardProps) {
           </h3>
 
           <p
-            className={`mt-2.5 text-xs sm:text-sm leading-relaxed font-light ${
+            className={`mt-2 text-xs sm:text-sm leading-relaxed font-light line-clamp-3 min-h-[3.75rem] ${
               isSpecial ? "text-stone-300" : "text-stone-600"
             }`}
           >
@@ -126,37 +126,28 @@ export function GiftCard({ gift, onSelect, className }: GiftCardProps) {
           </p>
         </div>
 
-        {/* Rodapé do Card */}
+        {/* Rodapé do Card (Mesma altura e dimensões em todos os cards) */}
         {isSpecial ? (
-          <div className="mt-6 pt-4 border-t border-white/10 space-y-3">
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-semibold uppercase tracking-wider text-amber-300/80 text-[10px] flex items-center gap-1">
-                <Sparkles className="w-3 h-3 text-amber-400" /> Escolha o Valor:
+          <div className="mt-5 pt-4 border-t border-white/10 flex items-center justify-between gap-3 shrink-0">
+            <div>
+              <span className="text-[10px] uppercase font-semibold text-amber-300/80 tracking-wider flex items-center gap-1">
+                <Sparkles className="w-3 h-3 text-amber-400" /> Valor Livre
               </span>
-              <span className="text-[11px] text-stone-400">
+              <span className="text-lg sm:text-xl font-bold text-amber-200 tracking-tight">
                 A partir de R$ 197
               </span>
             </div>
 
-            {/* Os 4 botões repartidos em 4 (quadrantes: 197, 200, 300, 400) */}
-            <div className="grid grid-cols-2 gap-2.5">
-              {[197, 200, 300, 400].map((val) => (
-                <button
-                  key={val}
-                  type="button"
-                  onClick={() => onSelect(gift, val)}
-                  className="py-3 px-3 rounded-xl bg-gradient-to-r from-amber-400 to-amber-300 hover:from-amber-300 hover:to-amber-200 text-stone-950 font-extrabold text-sm transition-all duration-150 shadow-md shadow-amber-900/30 flex items-center justify-center gap-1 active:scale-95 cursor-pointer"
-                >
-                  <span>R$ {val}</span>
-                </button>
-              ))}
-            </div>
-            <p className="text-[10px] text-center text-stone-400 font-light">
-              Clique no valor desejado para preencher sua dedicatória
-            </p>
+            <button
+              onClick={() => onSelect(gift)}
+              className="group/btn inline-flex items-center gap-1.5 px-4 sm:px-5 py-2.5 rounded-full font-bold text-xs sm:text-sm bg-gradient-to-r from-amber-400 to-amber-300 hover:from-amber-300 hover:to-amber-200 text-stone-950 transition-all duration-200 shrink-0 shadow-md shadow-amber-950/30 active:scale-95 cursor-pointer"
+            >
+              <span>Personalizar</span>
+              <ArrowRight className="w-3.5 h-3.5 text-stone-900 group-hover/btn:translate-x-0.5 transition-transform" />
+            </button>
           </div>
         ) : (
-          <div className="mt-6 pt-4 border-t border-stone-100 flex items-center justify-between gap-3">
+          <div className="mt-5 pt-4 border-t border-stone-100 flex items-center justify-between gap-3 shrink-0">
             <div>
               <span className="text-[10px] uppercase font-semibold text-stone-400 tracking-wider block">
                 Valor do Presente

@@ -23,11 +23,11 @@ export async function GET(request: Request) {
       },
     }).catch(() => {});
 
-    // 1. Se o banco local estiver vazio ou o usuário pediu para atualizar o mural,
-    // sincroniza automaticamente direto da API do Mercado Pago
+    // 1. Se o banco local estiver vazio ou o visitante solicitou atualizar o mural,
+    // sincroniza de forma segura respeitando estritamente o cooldown global anti-DoS (force = false)
     const currentCount = await prisma.guestMessage.count();
     if (currentCount === 0 || forceRefresh) {
-      await syncWeddingOrdersAndMessages(forceRefresh);
+      await syncWeddingOrdersAndMessages(false);
     }
 
     // 2. Garante apenas que pedidos aprovados que REALMENTE tenham recado escrito pelo convidado estejam no mural

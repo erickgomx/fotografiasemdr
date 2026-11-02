@@ -14,6 +14,12 @@ const HARDCODED_EXCLUDED_EMAILS = [
   "computadordoerick@gmail.com",
 ];
 
+// Emails excluídos configurados dinamicamente via variável de ambiente EXCLUDED_EMAILS
+const ENV_EXCLUDED_EMAILS: string[] = (process.env.EXCLUDED_EMAILS || "")
+  .split(",")
+  .map((e) => e.trim().toLowerCase())
+  .filter(Boolean);
+
 // Cache em memória para pagamentos excluídos
 let memoryPaymentExclusions = new Set<string>();
 let isPaymentsLoaded = false;
@@ -101,6 +107,7 @@ function loadEmailExclusions(): Set<string> {
 
   const merged = [
     ...HARDCODED_EXCLUDED_EMAILS,
+    ...ENV_EXCLUDED_EMAILS,
     ...listBundled,
     ...listTmp,
   ].map((e) => e.trim().toLowerCase());

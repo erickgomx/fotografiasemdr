@@ -188,7 +188,7 @@ export default function HomePage() {
                   </button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 items-stretch">
                   {filteredGifts.map((gift) => {
                     const isSingleSpecial =
                       filteredGifts.length === 1 && gift.category === "aberto";
@@ -198,12 +198,13 @@ export default function HomePage() {
                         key={gift.id}
                         className={
                           isSingleSpecial
-                            ? "sm:col-span-2 lg:col-span-1 lg:col-start-2 w-full max-w-md mx-auto lg:max-w-none"
-                            : "w-full"
+                            ? "sm:col-span-2 lg:col-span-1 lg:col-start-2 w-full h-full max-w-md mx-auto lg:max-w-none flex flex-col"
+                            : "w-full h-full flex flex-col"
                         }
                       >
                         <GiftCard
                           gift={gift}
+                          className="h-full"
                           onSelect={(item, val) => {
                             setSelectedGift(item);
                             setInitialCustomAmount(val);

@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { searchAllMPPayments, isWeddingPayment, mapMPStatus } from "@/lib/mercadopago";
-import { isPaymentExcluded, addExcludedPayment, isEmailExcluded, addExcludedEmail } from "@/lib/exclusions";
+import { isPaymentExcluded, addExcludedPayment, isEmailExcluded, addExcludedEmail, getExcludedEmails } from "@/lib/exclusions";
 
 // Cache em memória para evitar chamadas redundantes em segundos seguidos
 let lastSyncTimestamp = 0;
@@ -15,11 +15,12 @@ export async function syncWeddingOrdersAndMessages(force = false) {
 
   try {
     // 0. Limpeza preventiva de mensagens padrão falsas ou de pedidos deletados/excluídos
+    const excludedEmails = Array.from(getExcludedEmails());
     await prisma.guestMessage.deleteMany({
       where: {
         OR: [
           { message: "Muitas felicidades, amor e prosperidade aos noivos Erick & Itally!" },
-          { order: { payerEmail: "computadordoerick@gmail.com" } },
+          ...(excludedEmails.length > 0 ? [{ order: { payerEmail: { in: excludedEmails } } }] : []),
           { order: { status: "DELETED" } },
         ],
       },

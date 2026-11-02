@@ -13,6 +13,13 @@
 # production
 /build
 
+# database
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+prisma/*.db
+
 # misc
 .DS_Store
 *.pem
@@ -25,7 +32,9 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# local env files
+# env files
+.env
+.env*.local
 .env.local
 .env.development.local
 .env.test.local
