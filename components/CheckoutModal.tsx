@@ -12,7 +12,6 @@ import {
   Sparkles,
   ShieldCheck,
   Loader2,
-  Share2,
   AlertCircle,
   ArrowRight,
   CheckCircle2,
@@ -365,13 +364,6 @@ export function CheckoutModal({ gift, initialAmount, onClose, onSuccess, onGoToM
     navigator.clipboard.writeText(pixData.qrCode);
     setCopied(true);
     setTimeout(() => setCopied(false), 3000);
-  };
-
-  const handleShareWhatsApp = () => {
-    if (!gift) return;
-    const msg = `Acabei de presentear Erick & Itally com "${gift.title}" para o casamento! 🎬👰🤵`;
-    const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`;
-    window.open(url, "_blank");
   };
 
   if (!gift) return null;
@@ -846,21 +838,13 @@ export function CheckoutModal({ gift, initialAmount, onClose, onSuccess, onGoToM
                 Seu presente para <strong>{gift.title}</strong> foi confirmado com sucesso. Sua mensagem já está disponível no mural dos noivos!
               </p>
 
-              <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-2">
-                <button
-                  onClick={handleShareWhatsApp}
-                  className="w-full sm:w-auto px-5 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium flex items-center justify-center gap-2 transition-all shadow-xs"
-                >
-                  <Share2 className="w-3.5 h-3.5" />
-                  <span>Avisar no WhatsApp</span>
-                </button>
-
+              <div className="pt-4 flex items-center justify-center">
                 <button
                   onClick={() => {
                     onClose();
                     onGoToMessages();
                   }}
-                  className="w-full sm:w-auto px-5 py-2.5 rounded-full bg-stone-900 hover:bg-stone-800 text-white text-xs font-medium transition-all shadow-xs"
+                  className="w-full sm:w-auto px-6 py-2.5 rounded-full bg-stone-900 hover:bg-stone-800 text-white text-xs font-medium transition-all shadow-xs"
                 >
                   Ver no Mural
                 </button>

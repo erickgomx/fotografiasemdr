@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
+import { motion } from "framer-motion";
 import { Navbar } from "@/components/Navbar";
 import { Hero } from "@/components/Hero";
 import { CategoryTabs } from "@/components/CategoryTabs";
@@ -139,7 +140,13 @@ export default function HomePage() {
               id="catalogo-presentes"
               className="max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-16"
             >
-              <div className="text-center max-w-xl mx-auto mb-10">
+              <motion.div
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-60px" }}
+                transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                className="text-center max-w-xl mx-auto mb-10"
+              >
                 <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest block mb-2">
                   Escolha Seu Presente
                 </span>
@@ -149,18 +156,25 @@ export default function HomePage() {
                 <p className="mt-2 text-xs sm:text-sm text-stone-500 font-light leading-relaxed">
                   Selecione o presente desejado para contribuir com Pix dinâmico ou Cartão de Crédito.
                 </p>
-              </div>
+              </motion.div>
 
               {/* Filtros e Busca */}
-              <CategoryTabs
-                selectedCategory={selectedCategory}
-                onSelectCategory={setSelectedCategory}
-                searchQuery={searchQuery}
-                onSearchChange={setSearchQuery}
-                sortBy={sortBy}
-                onSortChange={setSortBy}
-                totalGiftsCount={gifts.length}
-              />
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ duration: 0.5, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <CategoryTabs
+                  selectedCategory={selectedCategory}
+                  onSelectCategory={setSelectedCategory}
+                  searchQuery={searchQuery}
+                  onSearchChange={setSearchQuery}
+                  sortBy={sortBy}
+                  onSortChange={setSortBy}
+                  totalGiftsCount={gifts.length}
+                />
+              </motion.div>
 
               {/* Grid de Presentes */}
               {loading ? (
@@ -189,13 +203,21 @@ export default function HomePage() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 items-stretch">
-                  {filteredGifts.map((gift) => {
+                  {filteredGifts.map((gift, idx) => {
                     const isSingleSpecial =
                       filteredGifts.length === 1 && gift.category === "aberto";
 
                     return (
-                      <div
+                      <motion.div
                         key={gift.id}
+                        initial={{ opacity: 0, y: 30 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true, margin: "-40px" }}
+                        transition={{
+                          duration: 0.5,
+                          delay: (idx % 3) * 0.08,
+                          ease: [0.22, 1, 0.36, 1],
+                        }}
                         className={
                           isSingleSpecial
                             ? "sm:col-span-2 lg:col-span-1 lg:col-start-2 w-full h-full max-w-md mx-auto lg:max-w-none flex flex-col"
@@ -210,7 +232,7 @@ export default function HomePage() {
                             setInitialCustomAmount(val);
                           }}
                         />
-                      </div>
+                      </motion.div>
                     );
                   })}
                 </div>
